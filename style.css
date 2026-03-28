@@ -455,46 +455,74 @@ button:disabled {
   display: none;
 }
 
-/* Gallery Open Button */
+/* Gallery Open Button — stacked polaroids look */
 
 #open-gallery-btn {
   position: absolute;
-  bottom: max(20px, calc(80px + 40px + env(safe-area-inset-bottom)));
+  bottom: max(24px, calc(72px + 48px + env(safe-area-inset-bottom)));
   right: 20px;
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.4);
+  width: 44px;
+  height: 52px;
+  border-radius: 3px;
+  background: #f5f0e8;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  opacity: 0.7;
+  opacity: 0.85;
   transition: all 150ms ease-out;
   z-index: 31;
-  border: 1px solid var(--color-hud-text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  background-size: cover;
+  background-position: center;
+  border: none;
+  overflow: visible;
+}
+
+/* Stacked card behind */
+#open-gallery-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #ece6da;
+  border-radius: 3px;
+  transform: rotate(6deg) translate(-2px, 2px);
+  z-index: -1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+#open-gallery-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #e0d8c8;
+  border-radius: 3px;
+  transform: rotate(-4deg) translate(2px, 3px);
+  z-index: -2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 #open-gallery-btn:hover {
-  opacity: 0.95;
-  background: rgba(0, 0, 0, 0.6);
+  opacity: 1;
+  transform: scale(1.08);
 }
 
 .gallery-count-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 24px;
-  height: 24px;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  height: 22px;
   background: var(--color-shutter-red);
   color: var(--color-cream);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   font-family: var(--font-mono);
+  z-index: 5;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
@@ -557,19 +585,7 @@ button:disabled {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Paper texture background — applied to the entire card face */
-.polaroid-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    /* subtle fiber texture */
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='.06'/%3E%3C/svg%3E");
-  background-size: 120px 120px;
-  mix-blend-mode: multiply;
-}
+/* Paper texture is applied inline per-style via JS */
 
 /* Photo area — true square */
 .photo-wrap {
@@ -732,15 +748,17 @@ button:disabled {
 .gallery-grid {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
   align-content: start;
+  justify-content: center;
 }
 
 .gallery-grid::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .gallery-grid::-webkit-scrollbar-track {
@@ -748,13 +766,33 @@ button:disabled {
 }
 
 .gallery-grid::-webkit-scrollbar-thumb {
-  background: var(--color-hud-text);
-  border-radius: 3px;
+  background: rgba(240, 225, 200, 0.25);
+  border-radius: 2px;
 }
 
+/* Gallery polaroid cards: fixed width, centered layout */
 .gallery-photo {
   --scatter-rotate: 0deg;
+  width: 220px;
   animation: photo-scatter 500ms cubic-bezier(0.34, 1.2, 0.64, 1) backwards;
+  transform: rotate(var(--scatter-rotate));
+  transition: transform 200ms ease-out;
+  cursor: pointer;
+}
+
+/* Show download button only on hover */
+.gallery-photo .download-btn {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.gallery-photo:hover .download-btn {
+  opacity: 1;
 }
 
 @keyframes photo-scatter {
@@ -769,7 +807,8 @@ button:disabled {
 }
 
 .gallery-photo:hover {
-  transform: rotate(0deg) scale(1.04);
+  transform: rotate(0deg) scale(1.06);
+  z-index: 2;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */

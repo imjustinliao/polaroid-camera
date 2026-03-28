@@ -11,6 +11,7 @@ const STYLES = {
     name: 'Classic',
     borderColor: '#ede4d3',
     paperColor: '#f5f0e8',
+    paperTexture: { baseFreq: '.65', octaves: 4, opacity: 0.06 },
     photoFilter: 'saturate(0.9) contrast(1.05)',
     tint: null,
     grain: 0.01,
@@ -21,6 +22,7 @@ const STYLES = {
     name: 'Warm',
     borderColor: '#f5d5b8',
     paperColor: '#faf0e4',
+    paperTexture: { baseFreq: '.5', octaves: 3, opacity: 0.08 },
     photoFilter: 'saturate(0.8) sepia(0.15) brightness(1.05)',
     tint: { color: 'rgba(255, 200, 100, 0.08)', op: 'screen' },
     grain: 0.015,
@@ -31,6 +33,7 @@ const STYLES = {
     name: 'Cool',
     borderColor: '#d9e4f5',
     paperColor: '#edf1f8',
+    paperTexture: { baseFreq: '.8', octaves: 5, opacity: 0.04 },
     photoFilter: 'saturate(0.85) hue-rotate(-5deg) brightness(0.95)',
     tint: { color: 'rgba(100, 150, 255, 0.1)', op: 'multiply' },
     grain: 0.012,
@@ -41,6 +44,7 @@ const STYLES = {
     name: 'Fade',
     borderColor: '#e8d9cc',
     paperColor: '#f2ebe2',
+    paperTexture: { baseFreq: '.45', octaves: 3, opacity: 0.09 },
     photoFilter: 'saturate(0.6) brightness(1.1) contrast(0.9)',
     tint: { color: 'rgba(255, 255, 255, 0.15)', op: 'screen' },
     grain: 0.018,
@@ -51,6 +55,7 @@ const STYLES = {
     name: 'Vintage',
     borderColor: '#c9a876',
     paperColor: '#e8daba',
+    paperTexture: { baseFreq: '.4', octaves: 3, opacity: 0.12 },
     photoFilter: 'saturate(0.5) sepia(0.3) brightness(0.95)',
     tint: { color: 'rgba(200, 120, 60, 0.12)', op: 'overlay' },
     grain: 0.02,
@@ -61,6 +66,7 @@ const STYLES = {
     name: 'Noir',
     borderColor: '#d5d0c8',
     paperColor: '#eae7e0',
+    paperTexture: { baseFreq: '.7', octaves: 4, opacity: 0.07 },
     photoFilter: 'saturate(0) contrast(1.2) brightness(0.95)',
     tint: null,
     grain: 0.025,
@@ -71,6 +77,7 @@ const STYLES = {
     name: 'Sunset',
     borderColor: '#f0c8a0',
     paperColor: '#faf0e0',
+    paperTexture: { baseFreq: '.55', octaves: 3, opacity: 0.07 },
     photoFilter: 'saturate(1.2) contrast(1.05) brightness(1.02)',
     tint: { color: 'rgba(255, 120, 50, 0.1)', op: 'screen' },
     grain: 0.012,
@@ -81,6 +88,7 @@ const STYLES = {
     name: 'Forest',
     borderColor: '#c8d4c0',
     paperColor: '#e8ede4',
+    paperTexture: { baseFreq: '.35', octaves: 2, opacity: 0.1 },
     photoFilter: 'saturate(0.75) hue-rotate(15deg) brightness(0.92)',
     tint: { color: 'rgba(60, 120, 60, 0.08)', op: 'multiply' },
     grain: 0.014,
@@ -91,6 +99,7 @@ const STYLES = {
     name: 'Rose',
     borderColor: '#e8c8d0',
     paperColor: '#f5e8ed',
+    paperTexture: { baseFreq: '.75', octaves: 5, opacity: 0.05 },
     photoFilter: 'saturate(0.85) brightness(1.02)',
     tint: { color: 'rgba(200, 100, 130, 0.08)', op: 'screen' },
     grain: 0.01,
@@ -101,6 +110,7 @@ const STYLES = {
     name: 'Arctic',
     borderColor: '#dce8f0',
     paperColor: '#f0f4f8',
+    paperTexture: { baseFreq: '.9', octaves: 5, opacity: 0.03 },
     photoFilter: 'saturate(0.7) brightness(1.1) hue-rotate(-10deg)',
     tint: { color: 'rgba(180, 210, 240, 0.1)', op: 'screen' },
     grain: 0.008,
@@ -111,6 +121,7 @@ const STYLES = {
     name: 'Amber',
     borderColor: '#d8b880',
     paperColor: '#ece0c8',
+    paperTexture: { baseFreq: '.4', octaves: 2, opacity: 0.11 },
     photoFilter: 'saturate(0.65) sepia(0.2) contrast(1.08)',
     tint: { color: 'rgba(180, 130, 50, 0.1)', op: 'overlay' },
     grain: 0.022,
@@ -121,6 +132,7 @@ const STYLES = {
     name: 'Dusk',
     borderColor: '#c0b0d0',
     paperColor: '#e8e0f0',
+    paperTexture: { baseFreq: '.6', octaves: 4, opacity: 0.08 },
     photoFilter: 'saturate(0.7) hue-rotate(-20deg) brightness(0.9)',
     tint: { color: 'rgba(100, 60, 150, 0.08)', op: 'overlay' },
     grain: 0.016,
@@ -377,16 +389,31 @@ const PolaroidRenderer = {
     ctx.restore();
   },
 
-  buildPolaroidElement(canvas, styleKey) {
+  copyCanvas(source) {
+    const copy = document.createElement('canvas');
+    copy.width = source.width;
+    copy.height = source.height;
+    const ctx = copy.getContext('2d');
+    ctx.drawImage(source, 0, 0);
+    return copy;
+  },
+
+  buildPolaroidElement(canvas, styleKey, copyCanvasData = false) {
     const style = STYLES[styleKey];
     const card = document.createElement('div');
     card.className = 'polaroid-card';
-    // Apply the style's paper color as background
-    card.style.background = style.paperColor || '#f5f0e8';
+    // Apply the style's paper color and unique texture
+    const paperBg = style.paperColor || '#f5f0e8';
+    const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
+    const textureSvg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+    card.style.background = `${textureSvg}, ${paperBg}`;
+    card.style.backgroundSize = '120px 120px, 100% 100%';
+
+    const displayCanvas = copyCanvasData ? this.copyCanvas(canvas) : canvas;
 
     const photoWrap = document.createElement('div');
     photoWrap.className = 'photo-wrap';
-    photoWrap.appendChild(canvas);
+    photoWrap.appendChild(displayCanvas);
 
     const developOverlay = document.createElement('div');
     developOverlay.className = 'develop-overlay';
@@ -958,21 +985,42 @@ const UIController = {
   },
 
   addToGallery(element, canvas) {
-    // Clone the element for gallery (remove animation classes)
-    const clonedElement = element.cloneNode(true);
-    clonedElement.classList.remove('ejecting');
-    clonedElement.className = 'polaroid-card gallery-photo';
+    // Build a fresh gallery card with a COPY of the canvas (cloned canvas is blank)
+    const galleryCard = PolaroidRenderer.buildPolaroidElement(canvas, AppState.currentStyle, true);
+    galleryCard.classList.add('gallery-photo');
+    // Remove the develop overlay in gallery (photo is already developed)
+    const devOverlay = galleryCard.querySelector('.develop-overlay');
+    if (devOverlay) devOverlay.remove();
 
     // Random scatter rotation
-    const rotation = (Math.random() - 0.5) * 7; // -3.5 to 3.5 degrees
-    clonedElement.style.setProperty('--scatter-rotate', rotation + 'deg');
-    clonedElement.style.animationDelay = `${AppState.photos.length * 0.08}s`;
+    const rotation = (Math.random() - 0.5) * 7;
+    galleryCard.style.setProperty('--scatter-rotate', rotation + 'deg');
+    galleryCard.style.animationDelay = `${AppState.photos.length * 0.08}s`;
 
     // Store photo data
-    AppState.photos.push({ element: clonedElement, canvas });
+    AppState.photos.push({ element: galleryCard, canvas });
 
-    this.galleryGrid.appendChild(clonedElement);
+    this.galleryGrid.appendChild(galleryCard);
     this.galleryCountBadge.textContent = AppState.photos.length;
+    this.updateGalleryPreview();
+  },
+
+  updateGalleryPreview() {
+    // Update the gallery button with a mini preview of the last photo
+    const btn = document.getElementById('open-gallery-btn');
+    const count = AppState.photos.length;
+    if (count > 0) {
+      const lastCanvas = AppState.photos[count - 1].canvas;
+      // Create a tiny thumbnail
+      const thumb = document.createElement('canvas');
+      thumb.width = 40;
+      thumb.height = 48;
+      const tctx = thumb.getContext('2d');
+      tctx.drawImage(lastCanvas, 0, 0, 40, 48);
+      btn.style.backgroundImage = `url(${thumb.toDataURL()})`;
+      btn.style.backgroundSize = 'cover';
+      btn.style.backgroundPosition = 'center';
+    }
   },
 
   openGallery() {
