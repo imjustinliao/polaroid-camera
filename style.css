@@ -233,14 +233,14 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Corner brackets — inset enough to clear HUD elements */
+/* Corner brackets */
 .vf-frame-guides::before {
   content: '';
   position: absolute;
   top: 48px;
   left: 16px;
   right: 16px;
-  bottom: 180px;
+  bottom: 120px;
   border: 1.5px solid rgba(240, 225, 200, 0.2);
   border-radius: 4px;
 }
@@ -322,7 +322,8 @@ button:disabled {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
-/* HUD: Bottom Controls */
+/* HUD: Bottom Controls — iPhone-style single row                               */
+/* [photo-stack]       [shutter]       [theme-picker]                           */
 /* ────────────────────────────────────────────────────────────────────────────── */
 
 .hud-bottom {
@@ -331,63 +332,119 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 24px max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-bottom));
+  padding: 16px max(16px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 20px;
-  pointer-events: auto;
-  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
-}
-
-.style-picker-strip {
-  display: flex;
+  justify-content: space-between;
   gap: 12px;
-  justify-content: center;
-  align-items: center;
-  max-width: 90vw;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  padding: 4px 0;
+  pointer-events: auto;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
 }
 
-.style-picker-strip::-webkit-scrollbar {
-  height: 2px;
-}
+/* ─── Photo Stack (left) ─── */
 
-.style-picker-strip::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.style-picker-strip::-webkit-scrollbar-thumb {
-  background: var(--color-hud-text);
-  border-radius: 1px;
-}
-
-/* Style picker: small rounded-rect swatches, NOT circles */
-.style-option {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+.photo-stack {
+  position: relative;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
-  border: 2px solid transparent;
   cursor: pointer;
-  transition: all 150ms ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.photo-stack.has-photos {
+  background: none;
+}
+
+/* Individual thumbnail in the stack */
+.stack-thumb {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(245, 240, 232, 0.85);
+  transition: transform 300ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.stack-thumb canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Stack layering — bottom cards fan out */
+.stack-thumb:nth-child(1) {
+  z-index: 1;
+  transform: rotate(-6deg) translate(-3px, 3px) scale(0.92);
+}
+.stack-thumb:nth-child(2) {
+  z-index: 2;
+  transform: rotate(4deg) translate(2px, 1px) scale(0.96);
+}
+.stack-thumb:nth-child(3) {
+  z-index: 3;
+  transform: rotate(-1deg) translate(0, 0) scale(1);
+}
+
+/* Empty state placeholder */
+.photo-stack:not(.has-photos)::before {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  border: 2px dashed rgba(240, 225, 200, 0.25);
+}
+
+.gallery-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  background: var(--color-shutter-red);
+  color: var(--color-cream);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: var(--font-mono);
+  z-index: 10;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
 }
 
-.style-option:hover {
-  transform: scale(1.12);
+.photo-stack.has-photos .gallery-count-badge {
+  opacity: 1;
 }
 
-.style-option.selected {
-  border-color: #fff;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.4);
-  transform: scale(1.08);
+/* Photo fly animation — from center to stack */
+@keyframes fly-to-stack {
+  0% {
+    transform: translate(var(--fly-start-x), var(--fly-start-y)) scale(0.6) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(-1deg);
+    opacity: 1;
+  }
 }
 
-/* Shutter: distinctly larger, double-ring design like a real camera button */
+.stack-thumb.flying {
+  animation: fly-to-stack 500ms cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+}
+
+/* ─── Shutter Button (center) ─── */
+
 .shutter-button {
   width: 72px;
   height: 72px;
@@ -404,7 +461,6 @@ button:disabled {
   flex-shrink: 0;
 }
 
-/* Inner highlight ring */
 .shutter-button::after {
   content: '';
   position: absolute;
@@ -430,16 +486,98 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* ─── Theme Picker (right) — film roulette ─── */
+
+.theme-picker-wrapper {
+  width: 120px;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  /* Film strip curvature via mask */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0,0,0,0.4) 8%,
+    black 20%,
+    black 80%,
+    rgba(0,0,0,0.4) 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0,0,0,0.4) 8%,
+    black 20%,
+    black 80%,
+    rgba(0,0,0,0.4) 92%,
+    transparent 100%
+  );
+}
+
+.style-picker-strip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 32px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  height: 100%;
+}
+
+.style-picker-strip:active {
+  cursor: grabbing;
+}
+
+/* Hide scrollbar */
+.style-picker-strip::-webkit-scrollbar {
+  display: none;
+}
+.style-picker-strip {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.style-option {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  scroll-snap-align: center;
+}
+
+.style-option:hover {
+  transform: scale(1.12);
+}
+
+.style-option.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.4);
+  transform: scale(1.1);
+}
+
+/* ─── Toggle Camera ─── */
+
 .toggle-camera-btn {
   position: absolute;
-  bottom: max(20px, calc(80px + 40px + env(safe-area-inset-bottom)));
-  left: 20px;
-  width: 48px;
-  height: 48px;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   opacity: 0.6;
   transition: opacity 150ms ease-out;
   z-index: 31;
@@ -453,76 +591,6 @@ button:disabled {
 
 .toggle-camera-btn.hidden {
   display: none;
-}
-
-/* Gallery Open Button — stacked polaroids look */
-
-#open-gallery-btn {
-  position: absolute;
-  bottom: max(24px, calc(72px + 48px + env(safe-area-inset-bottom)));
-  right: 20px;
-  width: 44px;
-  height: 52px;
-  border-radius: 3px;
-  background: #f5f0e8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.85;
-  transition: all 150ms ease-out;
-  z-index: 31;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  background-size: cover;
-  background-position: center;
-  border: none;
-  overflow: visible;
-}
-
-/* Stacked card behind */
-#open-gallery-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #ece6da;
-  border-radius: 3px;
-  transform: rotate(6deg) translate(-2px, 2px);
-  z-index: -1;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-#open-gallery-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #e0d8c8;
-  border-radius: 3px;
-  transform: rotate(-4deg) translate(2px, 3px);
-  z-index: -2;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-#open-gallery-btn:hover {
-  opacity: 1;
-  transform: scale(1.08);
-}
-
-.gallery-count-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  min-width: 22px;
-  height: 22px;
-  background: var(--color-shutter-red);
-  color: var(--color-cream);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: var(--font-mono);
-  z-index: 5;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
@@ -561,8 +629,6 @@ button:disabled {
 /* EJECT STAGE */
 /* ────────────────────────────────────────────────────────────────────────────── */
 
-/* ─── EJECT STAGE: polaroid briefly appears top-center then slides away ─── */
-
 #eject-stage {
   position: fixed;
   top: 50%;
@@ -573,9 +639,7 @@ button:disabled {
 }
 
 /* ─── POLAROID CARD ─── */
-/* Authentic Polaroid proportions: photo is square, thick bottom border.
-   Real Polaroid Classic is roughly 3.5 × 4.2 in — ratio ~1:1.2.
-   Photo area inside is square. Top/side borders ~equal, bottom ~2.5× top. */
+/* Canvas = photo only. The HTML card provides the polaroid frame. */
 
 .polaroid-card {
   position: relative;
@@ -585,9 +649,7 @@ button:disabled {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Paper texture is applied inline per-style via JS */
-
-/* Photo area — true square */
+/* Photo area — true square, canvas fills edge-to-edge */
 .photo-wrap {
   position: relative;
   width: calc(100% - 20px);
@@ -626,7 +688,7 @@ button:disabled {
   100% { opacity: 0;    filter: brightness(1) sepia(0); }
 }
 
-/* Eject: fly up from bottom, pause, then shrink away to gallery corner */
+/* Eject animation */
 .polaroid-card.ejecting {
   animation: polaroid-eject 1.2s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
 }
@@ -645,49 +707,43 @@ button:disabled {
 
 @keyframes polaroid-dismiss {
   0%   { transform: scale(1) translate(0, 0); opacity: 1; }
-  100% { transform: scale(0.15) translate(calc(50vw - 40px), calc(50vh - 40px)); opacity: 0; }
+  100% { transform: scale(0.15) translate(calc(-50vw + 40px), calc(50vh - 40px)); opacity: 0; }
 }
 
+/* No caption text on polaroid output */
 .polaroid-caption {
-  padding: 8px 10px 6px;
-  font-family: var(--font-serif);
-  font-size: 11px;
+  display: none;
+}
+
+/* Download overlay — hidden by default, subtle icon on hover */
+.download-overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-}
-
-.style-label {
-  font-style: italic;
-  color: rgba(26, 21, 16, 0.5);
-  font-size: 10px;
-}
-
-.capture-time {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: rgba(26, 21, 16, 0.4);
-}
-
-.download-btn {
-  padding: 5px 10px;
-  background: rgba(200, 75, 49, 0.12);
-  border: 1px solid rgba(200, 75, 49, 0.35);
-  border-radius: 3px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: bold;
-  letter-spacing: 0.1em;
-  color: var(--color-shutter-red);
-  text-transform: uppercase;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  opacity: 0;
+  transition: all 200ms ease-out;
   cursor: pointer;
-  transition: all 150ms ease-out;
+  z-index: 5;
+  border-radius: 3px;
 }
 
-.download-btn:hover {
-  background: rgba(200, 75, 49, 0.25);
-  border-color: rgba(200, 75, 49, 0.7);
+.download-overlay:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.download-overlay svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
@@ -770,7 +826,7 @@ button:disabled {
   border-radius: 2px;
 }
 
-/* Gallery polaroid cards: fixed width, centered layout */
+/* Gallery polaroid cards */
 .gallery-photo {
   --scatter-rotate: 0deg;
   width: 220px;
@@ -780,18 +836,11 @@ button:disabled {
   cursor: pointer;
 }
 
-/* Show download button only on hover */
-.gallery-photo .download-btn {
+.gallery-photo .download-overlay {
   opacity: 0;
-  transition: opacity 200ms ease-out;
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
 }
 
-.gallery-photo:hover .download-btn {
+.gallery-photo:hover .download-overlay {
   opacity: 1;
 }
 
@@ -924,8 +973,8 @@ button:disabled {
 
 @media (max-width: 768px) {
   .style-option {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
   }
 
   .shutter-button {
@@ -937,16 +986,21 @@ button:disabled {
     width: 200px;
   }
 
-  .toggle-camera-btn {
-    bottom: max(20px, calc(64px + 56px + env(safe-area-inset-bottom)));
+  .theme-picker-wrapper {
+    width: 100px;
   }
 
-  #open-gallery-btn {
-    bottom: max(20px, calc(64px + 56px + env(safe-area-inset-bottom)));
+  .photo-stack {
+    width: 50px;
+    height: 50px;
+  }
+
+  .stack-thumb {
+    width: 42px;
+    height: 42px;
   }
 
   .gallery-grid {
-    grid-template-columns: 1fr;
     padding: 16px;
     gap: 16px;
   }
@@ -966,8 +1020,8 @@ button:disabled {
   }
 
   .hud-bottom {
-    padding: 12px max(12px, env(safe-area-inset-bottom));
-    gap: 12px;
+    padding: 12px max(8px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+    gap: 8px;
   }
 
   .style-option {
@@ -984,18 +1038,18 @@ button:disabled {
     width: 160px;
   }
 
-  .toggle-camera-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    bottom: max(16px, calc(60px + 48px + env(safe-area-inset-bottom)));
+  .theme-picker-wrapper {
+    width: 90px;
   }
 
-  #open-gallery-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-    bottom: max(16px, calc(60px + 48px + env(safe-area-inset-bottom)));
+  .photo-stack {
+    width: 46px;
+    height: 46px;
+  }
+
+  .stack-thumb {
+    width: 38px;
+    height: 38px;
   }
 
   .gallery-count-badge {
@@ -1032,16 +1086,16 @@ button:disabled {
     transform: scale(1);
   }
 
-  #open-gallery-btn:hover {
-    opacity: 0.7;
-    background: rgba(0, 0, 0, 0.4);
-  }
-
   #close-gallery-btn:hover {
     opacity: 0.7;
   }
 
   .gallery-photo:hover {
     transform: rotate(var(--scatter-rotate)) scale(1);
+  }
+
+  /* On touch, show download overlay on tap via :active */
+  .gallery-photo:active .download-overlay {
+    opacity: 1;
   }
 }

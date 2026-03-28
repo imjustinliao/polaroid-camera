@@ -36,17 +36,19 @@
       <span class="hud-label style-name">CLASSIC</span>
     </div>
 
-    <!-- HUD: Bottom Controls -->
+    <!-- HUD: Bottom Controls — single row: [stack] [shutter] [theme-picker] -->
     <div class="hud-bottom">
-      <div id="style-picker" class="style-picker-strip"></div>
+      <div id="photo-stack" class="photo-stack" aria-label="View gallery">
+        <span class="gallery-count-badge">0</span>
+      </div>
       <button id="shutter-btn" class="shutter-button" aria-label="Take photo"></button>
-      <button id="toggle-camera" class="toggle-camera-btn" aria-label="Toggle camera" title="Switch camera">📷</button>
+      <div class="theme-picker-wrapper">
+        <div id="style-picker" class="style-picker-strip"></div>
+      </div>
     </div>
 
-    <!-- Gallery Open Button -->
-    <button id="open-gallery-btn" class="open-gallery-btn" aria-label="View gallery">
-      <span class="gallery-count-badge">0</span>
-    </button>
+    <!-- Toggle camera — top right area -->
+    <button id="toggle-camera" class="toggle-camera-btn" aria-label="Toggle camera" title="Switch camera">&#x1F4F7;</button>
   </div>
 
   <!-- SCENE: Flash -->
@@ -56,7 +58,7 @@
   <div id="scene-gallery">
     <div class="gallery-header">
       <h2 class="gallery-title">Your Roll</h2>
-      <button id="close-gallery-btn" class="close-gallery-btn" aria-label="Close gallery">✕</button>
+      <button id="close-gallery-btn" class="close-gallery-btn" aria-label="Close gallery">&#x2715;</button>
     </div>
     <div id="gallery-grid" class="gallery-grid"></div>
   </div>

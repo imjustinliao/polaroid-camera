@@ -141,11 +141,8 @@ const STYLES = {
   },
 };
 
-const OUTPUT_W = 800;
-const OUTPUT_H = 960;
-const PHOTO_X = 30;
-const PHOTO_Y = 30;
-const PHOTO_SIZE = 740;
+// Canvas output = photo only (square). The HTML card provides the polaroid frame.
+const PHOTO_SIZE = 800;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // APP STATE
@@ -272,47 +269,38 @@ const PolaroidRenderer = {
   render(photoCanvas, styleKey) {
     const style = STYLES[styleKey];
     const canvas = document.createElement('canvas');
-    canvas.width = OUTPUT_W;
-    canvas.height = OUTPUT_H;
+    // Output is photo-only square — the HTML card provides the polaroid frame
+    canvas.width = PHOTO_SIZE;
+    canvas.height = PHOTO_SIZE;
     const ctx = canvas.getContext('2d');
 
-    // Layer 1: Border fill
-    ctx.fillStyle = style.borderColor;
-    ctx.fillRect(0, 0, OUTPUT_W, OUTPUT_H);
-
-    // Layer 2: Photo (center-cropped square)
+    // Layer 1: Photo (center-cropped square, fills entire canvas)
     ctx.filter = style.photoFilter;
-    this.drawCroppedSquare(ctx, photoCanvas, PHOTO_X, PHOTO_Y, PHOTO_SIZE, PHOTO_SIZE);
+    this.drawCroppedSquare(ctx, photoCanvas, 0, 0, PHOTO_SIZE, PHOTO_SIZE);
     ctx.filter = 'none';
 
-    // Layer 3: Tint
+    // Layer 2: Tint
     if (style.tint) {
       ctx.globalCompositeOperation = style.tint.op;
       ctx.fillStyle = style.tint.color;
-      ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_SIZE, PHOTO_SIZE);
+      ctx.fillRect(0, 0, PHOTO_SIZE, PHOTO_SIZE);
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    // Layer 4: Film grain (FIX: use write-only approach, never read tainted canvas)
+    // Layer 3: Film grain
     if (style.grain > 0) {
-      this.applyGrainWriteOnly(ctx, OUTPUT_W, OUTPUT_H, style.grain);
+      this.applyGrainWriteOnly(ctx, PHOTO_SIZE, PHOTO_SIZE, style.grain);
     }
 
-    // Layer 5: Light leak
+    // Layer 4: Light leak
     if (style.lightLeak) {
-      this.applyLightLeak(ctx, OUTPUT_W, OUTPUT_H, style.lightLeak);
+      this.applyLightLeak(ctx, PHOTO_SIZE, PHOTO_SIZE, style.lightLeak);
     }
 
-    // Layer 6: Vignette
+    // Layer 5: Vignette
     if (style.vignette) {
-      this.applyVignette(ctx, OUTPUT_W, OUTPUT_H);
+      this.applyVignette(ctx, PHOTO_SIZE, PHOTO_SIZE);
     }
-
-    // Layer 7: Branding
-    ctx.fillStyle = '#999';
-    ctx.font = '11px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Polaroid', OUTPUT_W / 2, OUTPUT_H - 16);
 
     return canvas;
   },
@@ -423,23 +411,18 @@ const PolaroidRenderer = {
     const bottom = document.createElement('div');
     bottom.className = 'polaroid-bottom';
 
-    const caption = document.createElement('div');
-    caption.className = 'polaroid-caption';
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    caption.innerHTML = `
-      <span class="style-label">${style.name}</span>
-      <span class="capture-time">${time}</span>
-    `;
-    bottom.appendChild(caption);
-
-    const downloadBtn = document.createElement('button');
-    downloadBtn.className = 'download-btn';
-    downloadBtn.textContent = 'SAVE';
-    downloadBtn.addEventListener('click', () => this.downloadCanvas(canvas, styleKey));
+    // Download overlay — subtle icon on hover only
+    const dlOverlay = document.createElement('div');
+    dlOverlay.className = 'download-overlay';
+    dlOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    dlOverlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.downloadCanvas(canvas, styleKey);
+    });
 
     card.appendChild(photoWrap);
     card.appendChild(bottom);
-    card.appendChild(downloadBtn);
+    card.appendChild(dlOverlay);
 
     return card;
   },
@@ -775,6 +758,7 @@ const UIController = {
     this.bindShutterButton();
     this.bindCameraToggle();
     this.bindGalleryButtons();
+    this.initThemePickerDrag();
 
     // Start power-on sequence
     this.startPowerOn();
@@ -792,7 +776,8 @@ const UIController = {
     this.permissionOverlay = document.getElementById('permission-overlay');
     this.allowCameraBtn = document.getElementById('allow-camera-btn');
     this.galleryGrid = document.getElementById('gallery-grid');
-    this.galleryCountBadge = document.querySelector('.gallery-count-badge');
+    this.photoStack = document.getElementById('photo-stack');
+    this.galleryCountBadge = this.photoStack.querySelector('.gallery-count-badge');
     this.irisOverlay = document.querySelector('.iris-overlay');
   },
 
@@ -843,9 +828,30 @@ const UIController = {
   },
 
   bindGalleryButtons() {
-    document.getElementById('open-gallery-btn').addEventListener('click', () => this.openGallery());
+    this.photoStack.addEventListener('click', () => this.openGallery());
     document.getElementById('close-gallery-btn').addEventListener('click', () => this.closeGallery());
     this.allowCameraBtn.addEventListener('click', () => this.requestCameraPermission());
+  },
+
+  initThemePickerDrag() {
+    const strip = document.getElementById('style-picker');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    strip.addEventListener('mousedown', (e) => {
+      isDown = true;
+      startX = e.pageX - strip.offsetLeft;
+      scrollLeft = strip.scrollLeft;
+    });
+    strip.addEventListener('mouseleave', () => { isDown = false; });
+    strip.addEventListener('mouseup', () => { isDown = false; });
+    strip.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - strip.offsetLeft;
+      strip.scrollLeft = scrollLeft - (x - startX);
+    });
   },
 
   startPowerOn() {
@@ -998,29 +1004,42 @@ const UIController = {
     galleryCard.style.animationDelay = `${AppState.photos.length * 0.08}s`;
 
     // Store photo data
-    AppState.photos.push({ element: galleryCard, canvas });
+    AppState.photos.push({ element: galleryCard, canvas, styleKey: AppState.currentStyle });
 
     this.galleryGrid.appendChild(galleryCard);
     this.galleryCountBadge.textContent = AppState.photos.length;
-    this.updateGalleryPreview();
+    this.updatePhotoStack(canvas);
   },
 
-  updateGalleryPreview() {
-    // Update the gallery button with a mini preview of the last photo
-    const btn = document.getElementById('open-gallery-btn');
-    const count = AppState.photos.length;
-    if (count > 0) {
-      const lastCanvas = AppState.photos[count - 1].canvas;
-      // Create a tiny thumbnail
-      const thumb = document.createElement('canvas');
-      thumb.width = 40;
-      thumb.height = 48;
-      const tctx = thumb.getContext('2d');
-      tctx.drawImage(lastCanvas, 0, 0, 40, 48);
-      btn.style.backgroundImage = `url(${thumb.toDataURL()})`;
-      btn.style.backgroundSize = 'cover';
-      btn.style.backgroundPosition = 'center';
+  updatePhotoStack(newCanvas) {
+    const stack = this.photoStack;
+    stack.classList.add('has-photos');
+
+    // Keep max 3 thumbnails in the stack
+    const thumbs = stack.querySelectorAll('.stack-thumb');
+    if (thumbs.length >= 3) {
+      thumbs[0].remove(); // remove oldest
     }
+
+    // Create a thumbnail for the new photo
+    const thumb = document.createElement('div');
+    thumb.className = 'stack-thumb flying';
+    const miniCanvas = PolaroidRenderer.copyCanvas(newCanvas);
+    thumb.appendChild(miniCanvas);
+
+    // Calculate fly-from offset (center of screen to stack position)
+    const stackRect = stack.getBoundingClientRect();
+    const startX = (window.innerWidth / 2) - stackRect.left - (stackRect.width / 2);
+    const startY = (window.innerHeight / 2) - stackRect.top - (stackRect.height / 2);
+    thumb.style.setProperty('--fly-start-x', startX + 'px');
+    thumb.style.setProperty('--fly-start-y', startY + 'px');
+
+    stack.appendChild(thumb);
+
+    // Remove flying class after animation
+    setTimeout(() => {
+      thumb.classList.remove('flying');
+    }, 500);
   },
 
   openGallery() {
