@@ -233,14 +233,16 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Corner brackets */
+/* Corner brackets — inset enough to clear HUD elements */
 .vf-frame-guides::before {
   content: '';
   position: absolute;
-  inset: 24px;
-  border: 2px solid var(--color-guide-lines);
+  top: 48px;
+  left: 16px;
+  right: 16px;
+  bottom: 180px;
+  border: 1.5px solid rgba(240, 225, 200, 0.2);
   border-radius: 4px;
-  box-shadow: inset 0 0 20px rgba(8, 5, 2, 0.3);
 }
 
 /* Center focus crosshair */
@@ -329,12 +331,13 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 20px max(16px, env(safe-area-inset-bottom));
+  padding: 24px max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   pointer-events: auto;
+  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
 }
 
 .style-picker-strip {
@@ -362,57 +365,68 @@ button:disabled {
   border-radius: 1px;
 }
 
+/* Style picker: small rounded-rect swatches, NOT circles */
 .style-option {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   flex-shrink: 0;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 150ms ease-out;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .style-option:hover {
-  transform: scale(1.1);
+  transform: scale(1.12);
 }
 
 .style-option.selected {
-  border-color: var(--color-cream);
-  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.3), inset 0 0 8px rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.4);
+  transform: scale(1.08);
 }
 
+/* Shutter: distinctly larger, double-ring design like a real camera button */
 .shutter-button {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ff6b4a, var(--color-shutter-red));
+  background: radial-gradient(circle at 40% 38%, #ff7b5c, var(--color-shutter-red) 70%, #8b2e15);
   box-shadow:
-    0 6px 20px rgba(200, 75, 49, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.2),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  transition: all 120ms ease-out;
-  transform: scale(1);
+    0 0 0 4px rgba(255, 255, 255, 0.25),
+    0 0 0 6px rgba(0, 0, 0, 0.3),
+    0 8px 24px rgba(0, 0, 0, 0.5);
+  border: none;
+  transition: all 100ms ease-out;
   position: relative;
   z-index: 35;
-  min-height: 44px;
-  min-width: 44px;
+  flex-shrink: 0;
+}
+
+/* Inner highlight ring */
+.shutter-button::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
 .shutter-button:hover:not(:disabled) {
-  transform: scale(1.08);
+  transform: scale(1.06);
   box-shadow:
-    0 8px 24px rgba(200, 75, 49, 0.6),
-    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    0 0 0 4px rgba(255, 255, 255, 0.35),
+    0 0 0 6px rgba(0, 0, 0, 0.3),
+    0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
 .shutter-button:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: scale(0.94);
 }
 
 .shutter-button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -519,42 +533,65 @@ button:disabled {
 /* EJECT STAGE */
 /* ────────────────────────────────────────────────────────────────────────────── */
 
+/* ─── EJECT STAGE: polaroid briefly appears top-center then slides away ─── */
+
 #eject-stage {
   position: fixed;
-  bottom: 0;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   z-index: 40;
-  width: auto;
-  height: auto;
   pointer-events: none;
 }
 
+/* ─── POLAROID CARD ─── */
+/* Authentic Polaroid proportions: photo is square, thick bottom border.
+   Real Polaroid Classic is roughly 3.5 × 4.2 in — ratio ~1:1.2.
+   Photo area inside is square. Top/side borders ~equal, bottom ~2.5× top. */
+
 .polaroid-card {
   position: relative;
-  background: var(--color-cream);
-  border-radius: 4px;
+  width: 260px;
+  border-radius: 3px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  max-width: min(90vw, 340px);
-  width: auto;
-  margin: 0 auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
+/* Paper texture background — applied to the entire card face */
+.polaroid-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    /* subtle fiber texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='.06'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  mix-blend-mode: multiply;
+}
+
+/* Photo area — true square */
 .photo-wrap {
   position: relative;
-  width: 100%;
+  width: calc(100% - 20px);
+  margin: 10px auto 0;
   aspect-ratio: 1;
   background: var(--color-warm-dark);
   overflow: hidden;
 }
 
 .photo-wrap canvas {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
+  object-fit: cover;
+}
+
+/* Thick bottom border area — signature Polaroid look */
+.polaroid-bottom {
+  height: 56px;
+  position: relative;
 }
 
 .develop-overlay {
@@ -566,81 +603,64 @@ button:disabled {
 }
 
 @keyframes develop {
-  0% {
-    opacity: 1;
-    filter: brightness(0.05) sepia(1);
-  }
-  20% {
-    opacity: 0.95;
-    filter: brightness(0.12) sepia(0.8);
-  }
-  50% {
-    opacity: 0.7;
-    filter: brightness(0.4) sepia(0.5);
-  }
-  80% {
-    opacity: 0.25;
-    filter: brightness(0.85) sepia(0.15);
-  }
-  100% {
-    opacity: 0;
-    filter: brightness(1) sepia(0);
-  }
+  0%   { opacity: 1;    filter: brightness(0.05) sepia(1); }
+  20%  { opacity: 0.95; filter: brightness(0.12) sepia(0.8); }
+  50%  { opacity: 0.7;  filter: brightness(0.4) sepia(0.5); }
+  80%  { opacity: 0.25; filter: brightness(0.85) sepia(0.15); }
+  100% { opacity: 0;    filter: brightness(1) sepia(0); }
 }
 
+/* Eject: fly up from bottom, pause, then shrink away to gallery corner */
 .polaroid-card.ejecting {
-  animation: polaroid-eject 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: polaroid-eject 1.2s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
 }
 
 @keyframes polaroid-eject {
-  0% {
-    transform: translateY(100%) rotate(-1deg);
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  60% {
-    transform: translateY(-15%) rotate(0.5deg);
-  }
-  75% {
-    transform: translateY(-5%) rotate(-0.3deg);
-  }
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
+  0%   { transform: translateY(120vh) rotate(-2deg) scale(1); opacity: 0; }
+  20%  { opacity: 1; }
+  55%  { transform: translateY(0) rotate(0.5deg) scale(1); }
+  70%  { transform: translateY(-8px) rotate(-0.3deg) scale(1); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+.polaroid-card.dismissing {
+  animation: polaroid-dismiss 0.5s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes polaroid-dismiss {
+  0%   { transform: scale(1) translate(0, 0); opacity: 1; }
+  100% { transform: scale(0.15) translate(calc(50vw - 40px), calc(50vh - 40px)); opacity: 0; }
 }
 
 .polaroid-caption {
-  padding: 16px 12px 12px;
-  background: var(--color-cream);
+  padding: 8px 10px 6px;
   font-family: var(--font-serif);
-  font-size: 13px;
+  font-size: 11px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .style-label {
   font-style: italic;
-  color: rgba(26, 21, 16, 0.6);
-  font-size: 12px;
+  color: rgba(26, 21, 16, 0.5);
+  font-size: 10px;
 }
 
 .capture-time {
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(26, 21, 16, 0.5);
+  font-size: 9px;
+  color: rgba(26, 21, 16, 0.4);
 }
 
 .download-btn {
-  padding: 6px 12px;
-  background: rgba(200, 75, 49, 0.15);
-  border: 1px solid rgba(200, 75, 49, 0.4);
+  padding: 5px 10px;
+  background: rgba(200, 75, 49, 0.12);
+  border: 1px solid rgba(200, 75, 49, 0.35);
   border-radius: 3px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: bold;
   letter-spacing: 0.1em;
   color: var(--color-shutter-red);
@@ -865,21 +885,25 @@ button:disabled {
 
 @media (max-width: 768px) {
   .style-option {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
   }
 
   .shutter-button {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
+  }
+
+  .polaroid-card {
+    width: 200px;
   }
 
   .toggle-camera-btn {
-    bottom: max(20px, calc(72px + 40px + env(safe-area-inset-bottom)));
+    bottom: max(20px, calc(64px + 56px + env(safe-area-inset-bottom)));
   }
 
   #open-gallery-btn {
-    bottom: max(20px, calc(72px + 40px + env(safe-area-inset-bottom)));
+    bottom: max(20px, calc(64px + 56px + env(safe-area-inset-bottom)));
   }
 
   .gallery-grid {
@@ -890,14 +914,6 @@ button:disabled {
 
   .hud-label {
     font-size: 11px;
-  }
-
-  .style-label {
-    display: none;
-  }
-
-  .capture-time {
-    display: none;
   }
 }
 
@@ -916,33 +932,37 @@ button:disabled {
   }
 
   .style-option {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
   }
 
   .shutter-button {
-    width: 68px;
-    height: 68px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .polaroid-card {
+    width: 160px;
   }
 
   .toggle-camera-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
-    bottom: max(16px, calc(68px + 36px + env(safe-area-inset-bottom)));
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    bottom: max(16px, calc(60px + 48px + env(safe-area-inset-bottom)));
   }
 
   #open-gallery-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-    bottom: max(16px, calc(68px + 36px + env(safe-area-inset-bottom)));
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    bottom: max(16px, calc(60px + 48px + env(safe-area-inset-bottom)));
   }
 
   .gallery-count-badge {
-    min-width: 20px;
-    height: 20px;
-    font-size: 10px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 9px;
   }
 
   .permission-dialog {

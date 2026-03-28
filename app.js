@@ -10,6 +10,7 @@ const STYLES = {
   classic: {
     name: 'Classic',
     borderColor: '#ede4d3',
+    paperColor: '#f5f0e8',
     photoFilter: 'saturate(0.9) contrast(1.05)',
     tint: null,
     grain: 0.01,
@@ -19,6 +20,7 @@ const STYLES = {
   warm: {
     name: 'Warm',
     borderColor: '#f5d5b8',
+    paperColor: '#faf0e4',
     photoFilter: 'saturate(0.8) sepia(0.15) brightness(1.05)',
     tint: { color: 'rgba(255, 200, 100, 0.08)', op: 'screen' },
     grain: 0.015,
@@ -28,6 +30,7 @@ const STYLES = {
   cool: {
     name: 'Cool',
     borderColor: '#d9e4f5',
+    paperColor: '#edf1f8',
     photoFilter: 'saturate(0.85) hue-rotate(-5deg) brightness(0.95)',
     tint: { color: 'rgba(100, 150, 255, 0.1)', op: 'multiply' },
     grain: 0.012,
@@ -37,6 +40,7 @@ const STYLES = {
   fade: {
     name: 'Fade',
     borderColor: '#e8d9cc',
+    paperColor: '#f2ebe2',
     photoFilter: 'saturate(0.6) brightness(1.1) contrast(0.9)',
     tint: { color: 'rgba(255, 255, 255, 0.15)', op: 'screen' },
     grain: 0.018,
@@ -46,10 +50,81 @@ const STYLES = {
   vintage: {
     name: 'Vintage',
     borderColor: '#c9a876',
+    paperColor: '#e8daba',
     photoFilter: 'saturate(0.5) sepia(0.3) brightness(0.95)',
     tint: { color: 'rgba(200, 120, 60, 0.12)', op: 'overlay' },
     grain: 0.02,
     lightLeak: { corner: 'bottomRight', color: 'rgba(255, 200, 100, 0.35)' },
+    vignette: true,
+  },
+  noir: {
+    name: 'Noir',
+    borderColor: '#d5d0c8',
+    paperColor: '#eae7e0',
+    photoFilter: 'saturate(0) contrast(1.2) brightness(0.95)',
+    tint: null,
+    grain: 0.025,
+    lightLeak: null,
+    vignette: true,
+  },
+  sunset: {
+    name: 'Sunset',
+    borderColor: '#f0c8a0',
+    paperColor: '#faf0e0',
+    photoFilter: 'saturate(1.2) contrast(1.05) brightness(1.02)',
+    tint: { color: 'rgba(255, 120, 50, 0.1)', op: 'screen' },
+    grain: 0.012,
+    lightLeak: { corner: 'topLeft', color: 'rgba(255, 140, 60, 0.5)' },
+    vignette: true,
+  },
+  forest: {
+    name: 'Forest',
+    borderColor: '#c8d4c0',
+    paperColor: '#e8ede4',
+    photoFilter: 'saturate(0.75) hue-rotate(15deg) brightness(0.92)',
+    tint: { color: 'rgba(60, 120, 60, 0.08)', op: 'multiply' },
+    grain: 0.014,
+    lightLeak: null,
+    vignette: true,
+  },
+  rose: {
+    name: 'Rose',
+    borderColor: '#e8c8d0',
+    paperColor: '#f5e8ed',
+    photoFilter: 'saturate(0.85) brightness(1.02)',
+    tint: { color: 'rgba(200, 100, 130, 0.08)', op: 'screen' },
+    grain: 0.01,
+    lightLeak: { corner: 'both', color: 'rgba(255, 160, 180, 0.2)' },
+    vignette: true,
+  },
+  arctic: {
+    name: 'Arctic',
+    borderColor: '#dce8f0',
+    paperColor: '#f0f4f8',
+    photoFilter: 'saturate(0.7) brightness(1.1) hue-rotate(-10deg)',
+    tint: { color: 'rgba(180, 210, 240, 0.1)', op: 'screen' },
+    grain: 0.008,
+    lightLeak: null,
+    vignette: true,
+  },
+  amber: {
+    name: 'Amber',
+    borderColor: '#d8b880',
+    paperColor: '#ece0c8',
+    photoFilter: 'saturate(0.65) sepia(0.2) contrast(1.08)',
+    tint: { color: 'rgba(180, 130, 50, 0.1)', op: 'overlay' },
+    grain: 0.022,
+    lightLeak: { corner: 'bottomRight', color: 'rgba(220, 170, 60, 0.3)' },
+    vignette: true,
+  },
+  dusk: {
+    name: 'Dusk',
+    borderColor: '#c0b0d0',
+    paperColor: '#e8e0f0',
+    photoFilter: 'saturate(0.7) hue-rotate(-20deg) brightness(0.9)',
+    tint: { color: 'rgba(100, 60, 150, 0.08)', op: 'overlay' },
+    grain: 0.016,
+    lightLeak: { corner: 'topLeft', color: 'rgba(180, 120, 220, 0.25)' },
     vignette: true,
   },
 };
@@ -303,8 +378,11 @@ const PolaroidRenderer = {
   },
 
   buildPolaroidElement(canvas, styleKey) {
+    const style = STYLES[styleKey];
     const card = document.createElement('div');
     card.className = 'polaroid-card';
+    // Apply the style's paper color as background
+    card.style.background = style.paperColor || '#f5f0e8';
 
     const photoWrap = document.createElement('div');
     photoWrap.className = 'photo-wrap';
@@ -314,13 +392,18 @@ const PolaroidRenderer = {
     developOverlay.className = 'develop-overlay';
     photoWrap.appendChild(developOverlay);
 
+    // Thick bottom border (signature Polaroid)
+    const bottom = document.createElement('div');
+    bottom.className = 'polaroid-bottom';
+
     const caption = document.createElement('div');
     caption.className = 'polaroid-caption';
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     caption.innerHTML = `
-      <span class="style-label">${STYLES[styleKey].name}</span>
+      <span class="style-label">${style.name}</span>
       <span class="capture-time">${time}</span>
     `;
+    bottom.appendChild(caption);
 
     const downloadBtn = document.createElement('button');
     downloadBtn.className = 'download-btn';
@@ -328,7 +411,7 @@ const PolaroidRenderer = {
     downloadBtn.addEventListener('click', () => this.downloadCanvas(canvas, styleKey));
 
     card.appendChild(photoWrap);
-    card.appendChild(caption);
+    card.appendChild(bottom);
     card.appendChild(downloadBtn);
 
     return card;
@@ -839,12 +922,23 @@ const UIController = {
         polaroidElement.classList.add('ejecting');
         this.ejectionStage.appendChild(polaroidElement);
 
-        // Move to gallery after eject animation
+        // Re-enable shutter immediately after eject starts (user can shoot again)
         setTimeout(() => {
-          this.addToGallery(polaroidElement, polaroidCanvas);
           AppState.isCapturing = false;
           this.shutterBtn.disabled = false;
-        }, 1400);
+        }, 1200);
+
+        // After eject settles, dismiss it to gallery
+        setTimeout(() => {
+          polaroidElement.classList.remove('ejecting');
+          polaroidElement.classList.add('dismissing');
+          this.addToGallery(polaroidElement, polaroidCanvas);
+
+          // Clean up eject stage after dismiss animation
+          setTimeout(() => {
+            this.ejectionStage.innerHTML = '';
+          }, 600);
+        }, 2200);
       }, 200);
 
       // Update film counter
