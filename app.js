@@ -70,9 +70,11 @@ const AppState = {
   currentStyle: 'classic',
   photos: [],
   isCapturing: false,
+  isCameraReady: false,
   cameraFacingMode: 'environment', // 'environment' or 'user'
 
   transition(to) {
+    console.log('Transitioning to state:', to);
     this.current = to;
     this.updateSceneVisibility();
   },
@@ -89,6 +91,7 @@ const AppState = {
       const scene = document.getElementById(sceneId);
       if (activeScenes.includes(sceneId)) {
         scene.classList.add('active');
+        console.log('Made scene active:', sceneId);
       } else {
         scene.classList.remove('active');
       }
@@ -736,25 +739,41 @@ const UIController = {
   },
 
   startPowerOn() {
+    console.log('Starting power-on sequence');
     AppState.transition('poweron');
     SoundEngine.trigger('poweron');
 
-    // Wait for iris animation to complete, then request camera
+    // Wait for iris animation to complete
     const duration = 2800; // 2.2s iris + 0.6s fade
     setTimeout(() => {
-      this.initializeCamera();
+      console.log('Power-on complete, showing viewfinder');
+      this.showViewfinder();
     }, duration);
   },
 
-  async initializeCamera() {
+  showViewfinder() {
     AppState.transition('viewfinder');
-    const permitted = await CameraManager.init();
-    if (!permitted) {
+    console.log('Viewfinder scene activated, initializing camera...');
+
+    // Initialize camera in background
+    CameraManager.init().then(success => {
+      if (success) {
+        console.log('Camera initialized successfully');
+        AppState.isCameraReady = true;
+        this.sceneViewfinder.classList.add('camera-ready');
+        this.permissionOverlay.classList.add('hidden');
+      } else {
+        console.log('Camera initialization failed, showing permission prompt');
+        this.showPermissionPrompt();
+      }
+    }).catch(err => {
+      console.error('Camera init error:', err);
       this.showPermissionPrompt();
-    }
+    });
   },
 
   showPermissionPrompt() {
+    console.log('Showing permission prompt');
     const titleEl = document.getElementById('permission-title');
     const textEl = document.getElementById('permission-text');
     const btnEl = document.getElementById('allow-camera-btn');
@@ -764,61 +783,78 @@ const UIController = {
     textEl.textContent = 'This Polaroid camera needs access to your device\'s camera to work.';
     btnEl.textContent = 'Allow Camera';
     btnEl.disabled = false;
-    hintEl.textContent = 'You can change this in your browser settings at any time.';
+    hintEl.textContent = 'Tap the button below, then allow camera access in your browser.';
 
     this.permissionOverlay.classList.remove('hidden');
   },
 
   async requestCameraPermission() {
+    console.log('User tapped allow camera button');
     const btnEl = document.getElementById('allow-camera-btn');
+    const textEl = document.getElementById('permission-text');
+
     btnEl.disabled = true;
     btnEl.textContent = 'Starting camera...';
 
     const permitted = await CameraManager.init();
 
     if (permitted) {
+      console.log('Camera permission granted');
+      AppState.isCameraReady = true;
+      this.sceneViewfinder.classList.add('camera-ready');
       this.permissionOverlay.classList.add('hidden');
     } else {
+      console.log('Camera permission denied');
       btnEl.disabled = false;
       btnEl.textContent = 'Try Again';
-      const textEl = document.getElementById('permission-text');
-      textEl.textContent = 'Camera access was denied. Please allow camera access and try again.';
+      textEl.textContent = 'Camera access was denied or unavailable. Please try again or check your browser settings.';
     }
   },
 
   async capture() {
-    if (AppState.isCapturing) return;
+    if (AppState.isCapturing || !AppState.isCameraReady) {
+      console.log('Capture ignored - capturing:', AppState.isCapturing, 'camera ready:', AppState.isCameraReady);
+      return;
+    }
+
+    console.log('Capturing photo...');
     AppState.isCapturing = true;
     this.shutterBtn.disabled = true;
 
-    // Sound and flash
-    SoundEngine.trigger('full');
-    this.flashScreen();
+    try {
+      // Sound and flash
+      SoundEngine.trigger('full');
+      this.flashScreen();
 
-    // Capture photo synchronously
-    const photoCanvas = CameraManager.capture();
+      // Capture photo synchronously
+      const photoCanvas = CameraManager.capture();
 
-    // Render polaroid
-    const polaroidCanvas = PolaroidRenderer.render(photoCanvas, AppState.currentStyle);
-    const polaroidElement = PolaroidRenderer.buildPolaroidElement(polaroidCanvas, AppState.currentStyle);
+      // Render polaroid
+      const polaroidCanvas = PolaroidRenderer.render(photoCanvas, AppState.currentStyle);
+      const polaroidElement = PolaroidRenderer.buildPolaroidElement(polaroidCanvas, AppState.currentStyle);
 
-    // Inject into eject stage and animate
-    setTimeout(() => {
-      this.ejectionStage.innerHTML = '';
-      polaroidElement.classList.add('ejecting');
-      this.ejectionStage.appendChild(polaroidElement);
-
-      // Move to gallery after eject animation
+      // Inject into eject stage and animate
       setTimeout(() => {
-        this.addToGallery(polaroidElement, polaroidCanvas);
-        AppState.isCapturing = false;
-        this.shutterBtn.disabled = false;
-      }, 1400);
-    }, 200);
+        this.ejectionStage.innerHTML = '';
+        polaroidElement.classList.add('ejecting');
+        this.ejectionStage.appendChild(polaroidElement);
 
-    // Update film counter
-    AppState.photoCount--;
-    this.filmCounter.textContent = Math.max(0, AppState.photoCount);
+        // Move to gallery after eject animation
+        setTimeout(() => {
+          this.addToGallery(polaroidElement, polaroidCanvas);
+          AppState.isCapturing = false;
+          this.shutterBtn.disabled = false;
+        }, 1400);
+      }, 200);
+
+      // Update film counter
+      AppState.photoCount--;
+      this.filmCounter.textContent = Math.max(0, AppState.photoCount);
+    } catch (err) {
+      console.error('Capture error:', err);
+      AppState.isCapturing = false;
+      this.shutterBtn.disabled = false;
+    }
   },
 
   flashScreen() {
