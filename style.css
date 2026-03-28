@@ -152,19 +152,18 @@ button:disabled {
 #scene-viewfinder {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   background: var(--color-warm-dark);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.5s ease-out 2.3s;
+  transition: opacity 0.4s ease-out;
   overflow: hidden;
 }
 
 #scene-viewfinder.active {
   opacity: 1;
-  transition: opacity 0.3s ease-out;
 }
 
 #camera-feed {
