@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polaroid Camera</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #faf8f6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      color: #3a3a3a;
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+      #app-container {
+        gap: 24px;
+      }
+    }
+
+    /* ─── CAMERA BODY ─── */
+    .polaroid-camera {
+      width: 100%;
+      max-width: 320px;
+      padding: 0;
+      background: #f0ede8;
+      border-radius: 12px 12px 4px 4px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.15),
+        4px 8px 24px rgba(0, 0, 0, 0.35),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (max-width: 480px) {
+      .polaroid-camera {
+        max-width: 100%;
+      }
+    }
+
+    /* Top stripe and branding */
+    #camera-top {
+      height: 48px;
+      background: linear-gradient(
+        90deg,
+        #e8a020,
+        #d4501a,
+        #c8203a,
+        #9020c8,
+        #2050c8
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    #camera-top::after {
+      content: 'POLAROID';
+      position: absolute;
+    }
+
+    /* Camera face: lens, viewfinder, controls */
+    #camera-face {
+      padding: 18px 16px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 480px) {
+      #camera-face {
+        padding: 14px 12px;
+        gap: 10px;
+      }
+    }
+
+    /* Lens assembly */
+    .lens-assembly {
+      width: 100%;
+      max-width: 96px;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lens-outer-ring {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle, #d4cdc6, #a09890);
+      padding: 6px;
+      box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
+        0 1px 2px rgba(255, 255, 255, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lens-inner-ring {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #2d3748;
+      padding: 4px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lens-glass {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #6b7280, #1a202c);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .lens-glass::after {
+      content: '';
+      position: absolute;
+      top: 15%;
+      left: 20%;
+      width: 25%;
+      height: 15%;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      filter: blur(2px);
+    }
+
+    /* Right side controls */
+    .camera-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .viewfinder {
+      width: 100%;
+      max-width: 66px;
+      aspect-ratio: 1.4;
+      background: #1a1a1a;
+      border: 2px solid #a09890;
+      border-radius: 3px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    @media (max-width: 480px) {
+      .viewfinder {
+        max-width: 60px;
+      }
+    }
+
+    #viewfinder-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .flash-bar {
+      width: 70px;
+      height: 8px;
+      background: linear-gradient(180deg, #e8e4de, #c8c0b4);
+      border-radius: 2px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 2px 3px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .flash-indicator {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #666;
+      top: 1px;
+      right: 8px;
+      transition: background-color 150ms;
+    }
+
+    .flash-indicator.active {
+      background: #ef4444;
+      box-shadow: 0 0 6px #ef4444;
+    }
+
+    /* Camera bottom: film counter, eject slot, shutter */
+    #camera-bottom {
+      padding: 14px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+    }
+
+    @media (max-width: 480px) {
+      #camera-bottom {
+        padding: 12px 14px 16px;
+        gap: 8px;
+      }
+    }
+
+    .film-counter {
+      width: 56px;
+      height: 26px;
+      background: #1a1a1a;
+      border: 2px solid #8b7d75;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d4cdc6;
+      font-size: 11px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    @media (max-width: 480px) {
+      .film-counter {
+        width: 52px;
+        height: 24px;
+        font-size: 10px;
+      }
+    }
+
+    .eject-slot {
+      width: 100%;
+      max-width: 190px;
+      height: 8px;
+      background: #1a1a1a;
+      border-radius: 2px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
+      position: relative;
+      overflow: visible;
+    }
+
+    @media (max-width: 480px) {
+      .eject-slot {
+        max-width: 170px;
+        height: 7px;
+      }
+    }
+
+    #film-strip {
+      position: absolute;
+      bottom: -2px;
+      left: 10%;
+      width: 80%;
+      height: 0;
+      background: linear-gradient(180deg, #e8e0d0, #d4ccbc);
+      border-radius: 0 0 3px 3px;
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transform-origin: top center;
+      overflow: hidden;
+    }
+
+    #film-strip.ejecting {
+      animation: filmEject 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    @keyframes filmEject {
+      0% {
+        height: 0;
+        transform: translateY(0);
+      }
+      40% {
+        height: 60px;
+      }
+      70% {
+        height: 68px;
+      }
+      100% {
+        height: 65px;
+      }
+    }
+
+    .shutter-button {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      background: radial-gradient(circle at 40% 35%, #d85a3a, #c84b31);
+      box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        0 2px 0 #9b3825,
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: transform 80ms, box-shadow 80ms;
+      font-weight: bold;
+      color: white;
+      font-size: 20px;
+    }
+
+    .shutter-button:hover {
+      background: radial-gradient(circle at 40% 35%, #e8694d, #d85a3a);
+    }
+
+    .shutter-button:active {
+      transform: translateY(2px);
+      box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0px 0 #9b3825,
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .shutter-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ─── STYLE PICKER ─── */
+    #style-picker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+      gap: 10px;
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .style-option {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 150ms, border-color 150ms, box-shadow 150ms;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .style-option:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .style-option.selected {
+      border-color: #3a3a3a;
+      box-shadow: 0 0 0 2px #faf8f6, 0 0 0 4px #3a3a3a;
+    }
+
+    @media (max-width: 480px) {
+      #style-picker {
+        grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+        gap: 8px;
+        padding: 12px;
+      }
+    }
+
+    /* ─── GALLERY ─── */
+    #gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      align-items: center;
+      padding-bottom: 24px;
+    }
+
+    .gallery-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 8px;
+    }
+
+    .polaroid-frame {
+      position: relative;
+      background: white;
+      border-radius: 2px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      animation: slideUp 600ms ease-out;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .polaroid-frame canvas {
+      display: block;
+      border-radius: 2px;
+      width: 100%;
+      height: auto;
+    }
+
+    .polaroid-info {
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #999;
+      background: #fafafa;
+    }
+
+    .style-label {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .download-btn {
+      padding: 6px 14px;
+      background: #c84b31;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background 200ms;
+    }
+
+    .download-btn:hover {
+      background: #b5401f;
+    }
+
+    @media (max-width: 480px) {
+      #gallery {
+        gap: 12px;
+        padding-bottom: 16px;
+      }
+
+      .polaroid-frame {
+        max-width: 100%;
+      }
+    }
+
+    /* ─── PERMISSION PROMPT ─── */
+    #permission-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 300ms ease-out;
+      pointer-events: auto;
+    }
+
+    #permission-prompt.hidden {
+      opacity: 0;
+      pointer-events: none;
+      display: none !important;
+    }
+
+    .permission-dialog {
+      background: white;
+      padding: 32px 28px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 320px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .permission-dialog h2 {
+      margin-bottom: 12px;
+      color: #3a3a3a;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .permission-dialog p {
+      color: #666;
+      margin-bottom: 24px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .permission-dialog button {
+      padding: 10px 24px;
+      background: #c84b31;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 200ms;
+    }
+
+    .permission-dialog button:hover {
+      background: #b5401f;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- POLAROID CAMERA -->
+    <div class="polaroid-camera">
+      <div id="camera-top"></div>
+
+      <div id="camera-face">
+        <!-- Lens -->
+        <div class="lens-assembly">
+          <div class="lens-outer-ring">
+            <div class="lens-inner-ring">
+              <div class="lens-glass"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right side controls -->
+        <div class="camera-controls">
+          <div class="viewfinder">
+            <video
+              id="viewfinder-video"
+              autoplay
+              playsinline
+              muted
+            ></video>
+          </div>
+          <div class="flash-bar">
+            <div class="flash-indicator"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="camera-bottom">
+        <div class="film-counter">10</div>
+        <div class="eject-slot">
+          <div id="film-strip"></div>
+        </div>
+        <button class="shutter-button" id="shutter-btn">●</button>
+      </div>
+    </div>
+
+    <!-- STYLE PICKER -->
+    <div id="style-picker"></div>
+
+    <!-- GALLERY -->
+    <div id="gallery"></div>
+  </div>
+
+  <!-- PERMISSION PROMPT -->
+  <div id="permission-prompt" class="hidden">
+    <div class="permission-dialog">
+      <h2>Camera Access</h2>
+      <p>This app needs access to your camera to take Polaroid pictures.</p>
+      <button id="allow-camera">Allow Camera</button>
+    </div>
+  </div>
+
+  <script>
+    // ──────────────────────────────────────────────────────────
+    // CONSTANTS & CONFIG
+    // ──────────────────────────────────────────────────────────
+
+    const OUTPUT_W = 800;
+    const OUTPUT_H = 960;
+    const PHOTO_X = 30;
+    const PHOTO_Y = 30;
+    const PHOTO_SIZE = 740;
+
+    const STYLES = {
+      classic: {
+        name: 'Classic',
+        borderColor: '#ffffff',
+        photoFilter: 'none',
+        grain: 0.01,
+        lightLeak: null,
+        vignette: false,
+        tint: null,
+      },
+      cream: {
+        name: 'Cream',
+        borderColor: '#f5f0e8',
+        photoFilter: 'none',
+        grain: 0.03,
+        lightLeak: null,
+        vignette: false,
+        tint: null,
+      },
+      sepia: {
+        name: 'Sepia',
+        borderColor: '#e8dcc0',
+        photoFilter: 'sepia(0.5) saturate(0.9)',
+        grain: 0.05,
+        lightLeak: null,
+        vignette: false,
+        tint: { color: 'rgba(160, 120, 60, 0.06)', op: 'multiply' },
+      },
+      vintage: {
+        name: 'Vintage',
+        borderColor: '#d4c4a8',
+        photoFilter: 'sepia(0.8) saturate(0.7) contrast(1.1)',
+        grain: 0.08,
+        lightLeak: { corner: 'topLeft', color: 'rgba(220, 160, 80, 0.15)' },
+        vignette: true,
+        tint: { color: 'rgba(140, 100, 40, 0.1)', op: 'multiply' },
+      },
+      sunburn: {
+        name: 'Sunburn',
+        borderColor: '#fce4d6',
+        photoFilter: 'sepia(0.3) saturate(1.4) hue-rotate(8deg)',
+        grain: 0.04,
+        lightLeak: { corner: 'topLeft', color: 'rgba(255, 180, 100, 0.3)' },
+        vignette: false,
+        tint: { color: 'rgba(255, 140, 60, 0.08)', op: 'screen' },
+      },
+      coolTone: {
+        name: 'Cool',
+        borderColor: '#d8e8f4',
+        photoFilter: 'saturate(1.1) hue-rotate(-5deg)',
+        grain: 0.03,
+        lightLeak: null,
+        vignette: true,
+        tint: { color: 'rgba(80, 140, 200, 0.08)', op: 'multiply' },
+      },
+      blueShift: {
+        name: 'Blue Shift',
+        borderColor: '#c8daf5',
+        photoFilter: 'saturate(1.3) hue-rotate(15deg) contrast(1.05)',
+        grain: 0.04,
+        lightLeak: { corner: 'bottomRight', color: 'rgba(100, 150, 255, 0.2)' },
+        vignette: false,
+        tint: { color: 'rgba(60, 120, 200, 0.1)', op: 'screen' },
+      },
+      acidGreen: {
+        name: 'Acid',
+        borderColor: '#e0f0d0',
+        photoFilter: 'saturate(1.5) hue-rotate(70deg) contrast(1.2)',
+        grain: 0.06,
+        lightLeak: { corner: 'topLeft', color: 'rgba(150, 255, 80, 0.25)' },
+        vignette: true,
+        tint: { color: 'rgba(100, 180, 60, 0.12)', op: 'screen' },
+      },
+      fade: {
+        name: 'Fade',
+        borderColor: '#f5f3ef',
+        photoFilter: 'brightness(1.15) saturate(0.5) contrast(0.9)',
+        grain: 0.07,
+        lightLeak: null,
+        vignette: false,
+        tint: { color: 'rgba(200, 180, 150, 0.2)', op: 'multiply' },
+      },
+      expired: {
+        name: 'Expired',
+        borderColor: '#e8dcc0',
+        photoFilter: 'saturate(0.6) contrast(1.2) hue-rotate(20deg)',
+        grain: 0.12,
+        lightLeak: { corner: 'both', color: 'rgba(180, 100, 40, 0.2)' },
+        vignette: true,
+        tint: { color: 'rgba(80, 100, 60, 0.14)', op: 'multiply' },
+      },
+      darkMood: {
+        name: 'Dark Mood',
+        borderColor: '#3a3a3a',
+        photoFilter: 'saturate(0.8) contrast(1.3) brightness(0.95)',
+        grain: 0.05,
+        lightLeak: null,
+        vignette: true,
+        tint: { color: 'rgba(0, 0, 0, 0.15)', op: 'multiply' },
+      },
+      duotone: {
+        name: 'Duotone',
+        borderColor: '#f0e8e0',
+        photoFilter: 'saturate(1.5) hue-rotate(-15deg) contrast(1.25)',
+        grain: 0.06,
+        lightLeak: { corner: 'both', color: 'rgba(255, 120, 60, 0.15)' },
+        vignette: false,
+        tint: { color: 'rgba(150, 80, 120, 0.1)', op: 'multiply' },
+      },
+      superSat: {
+        name: 'Super Sat',
+        borderColor: '#fff5e6',
+        photoFilter: 'saturate(2) contrast(1.1) brightness(1.05)',
+        grain: 0.03,
+        lightLeak: null,
+        vignette: false,
+        tint: null,
+      },
+    };
+
+    // ──────────────────────────────────────────────────────────
+    // CAMERA MANAGER
+    // ──────────────────────────────────────────────────────────
+
+    const CameraManager = {
+      stream: null,
+      videoEl: null,
+
+      async init() {
+        this.videoEl = document.getElementById('viewfinder-video');
+        try {
+          const constraints = {
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280 },
+              height: { ideal: 960 },
+            },
+          };
+          this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+          this.videoEl.srcObject = this.stream;
+          await new Promise((resolve) => {
+            this.videoEl.onloadedmetadata = resolve;
+          });
+          return true;
+        } catch (err) {
+          console.error('Camera error:', err);
+          return false;
+        }
+      },
+
+      capture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.videoEl.videoWidth;
+        canvas.height = this.videoEl.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(this.videoEl, 0, 0);
+        return canvas;
+      },
+
+      stop() {
+        if (this.stream) {
+          this.stream.getTracks().forEach((track) => track.stop());
+          this.stream = null;
+        }
+      },
+    };
+
+    // ──────────────────────────────────────────────────────────
+    // POLAROID RENDERER
+    // ──────────────────────────────────────────────────────────
+
+    const PolaroidRenderer = {
+      render(photoCanvas, styleKey) {
+        const style = STYLES[styleKey];
+        const canvas = document.createElement('canvas');
+        canvas.width = OUTPUT_W;
+        canvas.height = OUTPUT_H;
+        const ctx = canvas.getContext('2d');
+
+        // Layer 1: Border fill
+        ctx.fillStyle = style.borderColor;
+        ctx.fillRect(0, 0, OUTPUT_W, OUTPUT_H);
+
+        // Layer 2: Photo (center-cropped square)
+        ctx.filter = style.photoFilter;
+        this.drawCroppedSquare(ctx, photoCanvas, PHOTO_X, PHOTO_Y, PHOTO_SIZE, PHOTO_SIZE);
+        ctx.filter = 'none';
+
+        // Layer 3: Tint
+        if (style.tint) {
+          ctx.globalCompositeOperation = style.tint.op;
+          ctx.fillStyle = style.tint.color;
+          ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_SIZE, PHOTO_SIZE);
+          ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // Layer 4: Film grain
+        if (style.grain > 0) {
+          this.applyGrain(ctx, OUTPUT_W, OUTPUT_H, style.grain);
+        }
+
+        // Layer 5: Light leak
+        if (style.lightLeak) {
+          this.applyLightLeak(ctx, OUTPUT_W, OUTPUT_H, style.lightLeak);
+        }
+
+        // Layer 6: Vignette
+        if (style.vignette) {
+          this.applyVignette(ctx, OUTPUT_W, OUTPUT_H);
+        }
+
+        // Layer 7: Branding
+        ctx.fillStyle = '#999';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Polaroid', OUTPUT_W / 2, OUTPUT_H - 16);
+
+        return canvas;
+      },
+
+      drawCroppedSquare(ctx, img, dx, dy, dw, dh) {
+        const srcW = img.width;
+        const srcH = img.height;
+        const side = Math.min(srcW, srcH);
+        const sx = (srcW - side) / 2;
+        const sy = (srcH - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, dx, dy, dw, dh);
+      },
+
+      applyGrain(ctx, width, height, intensity) {
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const noise = (Math.random() - 0.5) * intensity * 255;
+          data[i] = Math.max(0, Math.min(255, data[i] + noise));
+          data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise));
+          data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise));
+        }
+        ctx.putImageData(imageData, 0, 0);
+      },
+
+      applyLightLeak(ctx, width, height, options) {
+        const { corner, color } = options;
+        const corners = corner === 'both' ? ['topLeft', 'bottomRight'] : [corner];
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+
+        for (const c of corners) {
+          const x = c.includes('Left') ? 0 : width;
+          const y = c.includes('top') ? 0 : height;
+          const grad = ctx.createRadialGradient(x, y, 0, x, y, width * 0.6);
+          grad.addColorStop(0, color);
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, width, height);
+        }
+
+        ctx.restore();
+      },
+
+      applyVignette(ctx, width, height) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        const grad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.8);
+        grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      },
+    };
+
+    // ──────────────────────────────────────────────────────────
+    // SOUND ENGINE
+    // ──────────────────────────────────────────────────────────
+
+    const SoundEngine = {
+      audioCtx: null,
+
+      ensureContext() {
+        if (!this.audioCtx) {
+          this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.audioCtx.state === 'suspended') {
+          this.audioCtx.resume();
+        }
+        return this.audioCtx;
+      },
+
+      playShutterClick() {
+        const ctx = this.ensureContext();
+        const now = ctx.currentTime;
+
+        // Noise burst
+        const bufferSize = Math.ceil(ctx.sampleRate * 0.05);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.1));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const bpf = ctx.createBiquadFilter();
+        bpf.type = 'bandpass';
+        bpf.frequency.value = 3000;
+        bpf.Q.value = 0.8;
+
+        // Low thump
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.04);
+
+        const oscGain = ctx.createGain();
+        oscGain.gain.setValueAtTime(0.4, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.3, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        noise.connect(bpf);
+        bpf.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        osc.connect(oscGain);
+        oscGain.connect(ctx.destination);
+
+        noise.start(now);
+        osc.start(now);
+        noise.stop(now + 0.1);
+        osc.stop(now + 0.1);
+      },
+
+      playMotorWhir() {
+        const ctx = this.ensureContext();
+        const now = ctx.currentTime;
+        const duration = 1.2;
+
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(80, now);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.3);
+        osc.frequency.setValueAtTime(100, now + duration - 0.2);
+        osc.frequency.linearRampToValueAtTime(40, now + duration);
+
+        const amOsc = ctx.createOscillator();
+        amOsc.type = 'sine';
+        amOsc.frequency.value = 12;
+
+        const amGain = ctx.createGain();
+        amGain.gain.value = 0.3;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0, now);
+        masterGain.gain.linearRampToValueAtTime(0.15, now + 0.08);
+        masterGain.gain.setValueAtTime(0.15, now + duration - 0.15);
+        masterGain.gain.linearRampToValueAtTime(0, now + duration);
+
+        const lpf = ctx.createBiquadFilter();
+        lpf.type = 'lowpass';
+        lpf.frequency.value = 800;
+        lpf.Q.value = 1.5;
+
+        amOsc.connect(amGain);
+        amGain.connect(osc.frequency);
+        osc.connect(lpf);
+        lpf.connect(masterGain);
+        masterGain.connect(ctx.destination);
+
+        osc.start(now);
+        amOsc.start(now);
+        osc.stop(now + duration);
+        amOsc.stop(now + duration);
+      },
+
+      playFilmSlide() {
+        const ctx = this.ensureContext();
+        const now = ctx.currentTime;
+        const duration = 1.0;
+
+        const bufferSize = Math.ceil(ctx.sampleRate * duration);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+          const t = i / ctx.sampleRate;
+          const env = Math.sin(Math.PI * (t / duration));
+          data[i] = (Math.random() * 2 - 1) * env * 0.6;
+        }
+
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+
+        const hpf = ctx.createBiquadFilter();
+        hpf.type = 'highpass';
+        hpf.frequency.value = 1200;
+
+        const notch = ctx.createBiquadFilter();
+        notch.type = 'notch';
+        notch.frequency.value = 4000;
+        notch.Q.value = 2;
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.08, now);
+
+        source.connect(hpf);
+        hpf.connect(notch);
+        notch.connect(gain);
+        gain.connect(ctx.destination);
+
+        source.start(now);
+        source.stop(now + duration);
+      },
+
+      trigger() {
+        this.playShutterClick();
+        setTimeout(() => this.playMotorWhir(), 80);
+        setTimeout(() => this.playFilmSlide(), 120);
+      },
+    };
+
+    // ──────────────────────────────────────────────────────────
+    // UI CONTROLLER
+    // ──────────────────────────────────────────────────────────
+
+    const UIController = {
+      currentStyle: 'classic',
+      isCapturing: false,
+
+      async init() {
+        this.initStylePicker();
+        this.bindShutterButton();
+
+        // Try to init camera
+        const permitted = await CameraManager.init();
+        if (!permitted) {
+          this.showPermissionPrompt();
+        }
+      },
+
+      initStylePicker() {
+        const picker = document.getElementById('style-picker');
+        for (const [key, style] of Object.entries(STYLES)) {
+          const option = document.createElement('div');
+          option.className = 'style-option';
+          if (key === 'classic') option.classList.add('selected');
+          option.style.backgroundColor = style.borderColor;
+          option.style.boxShadow = `0 2px 8px rgba(0,0,0,0.15), inset 0 1px 2px ${style.borderColor}`;
+          option.title = style.name;
+          option.addEventListener('click', () => this.selectStyle(key, option));
+          picker.appendChild(option);
+        }
+      },
+
+      selectStyle(key, element) {
+        document.querySelectorAll('.style-option').forEach((opt) => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        this.currentStyle = key;
+      },
+
+      bindShutterButton() {
+        document.getElementById('shutter-btn').addEventListener('click', () => this.capture());
+      },
+
+      async capture() {
+        if (this.isCapturing) return;
+        this.isCapturing = true;
+        document.getElementById('shutter-btn').disabled = true;
+
+        SoundEngine.trigger();
+        this.flashLED();
+        const photoCanvas = CameraManager.capture();
+
+        // Animate film eject
+        this.animateFilmEject();
+
+        // Render Polaroid (slight delay for UX)
+        setTimeout(() => {
+          const polaroidCanvas = PolaroidRenderer.render(photoCanvas, this.currentStyle);
+          setTimeout(() => {
+            this.addToGallery(polaroidCanvas);
+            this.isCapturing = false;
+            document.getElementById('shutter-btn').disabled = false;
+          }, 300);
+        }, 100);
+      },
+
+      flashLED() {
+        const indicator = document.querySelector('.flash-indicator');
+        indicator.classList.add('active');
+        setTimeout(() => indicator.classList.remove('active'), 150);
+      },
+
+      animateFilmEject() {
+        const strip = document.getElementById('film-strip');
+        strip.classList.remove('ejecting');
+        void strip.offsetWidth; // Trigger reflow
+        strip.classList.add('ejecting');
+      },
+
+      addToGallery(canvas) {
+        const gallery = document.getElementById('gallery');
+        if (gallery.children.length === 0) {
+          const title = document.createElement('div');
+          title.className = 'gallery-title';
+          title.textContent = 'Your Polaroids';
+          gallery.appendChild(title);
+        }
+
+        const frame = document.createElement('div');
+        frame.className = 'polaroid-frame';
+
+        const info = document.createElement('div');
+        info.className = 'polaroid-info';
+
+        const label = document.createElement('div');
+        label.className = 'style-label';
+        label.textContent = STYLES[this.currentStyle].name;
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'download-btn';
+        downloadBtn.textContent = 'Download';
+        downloadBtn.addEventListener('click', () => this.downloadCanvas(canvas, this.currentStyle));
+
+        info.appendChild(label);
+        info.appendChild(downloadBtn);
+
+        frame.appendChild(canvas);
+        frame.appendChild(info);
+        gallery.appendChild(frame);
+      },
+
+      downloadCanvas(canvas, styleKey) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        const filename = `polaroid-${styleKey}-${timestamp}.png`;
+
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      },
+
+      showPermissionPrompt() {
+        const prompt = document.getElementById('permission-prompt');
+        prompt.classList.remove('hidden');
+        document.getElementById('allow-camera').addEventListener('click', async () => {
+          const permitted = await CameraManager.init();
+          if (permitted) {
+            prompt.classList.add('hidden');
+            setTimeout(() => {
+              prompt.style.display = 'none';
+            }, 300);
+          } else {
+            alert('Camera access was denied. Please allow camera access to use this app.');
+          }
+        });
+      },
+    };
+
+    // ──────────────────────────────────────────────────────────
+    // INIT
+    // ──────────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', () => {
+      UIController.init();
+    });
+  </script>
+</body>
+</html>
