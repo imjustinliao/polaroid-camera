@@ -105,8 +105,16 @@ const CameraManager = {
   videoEl: null,
 
   async init() {
-    this.videoEl = document.getElementById('camera-feed');
+    if (!this.videoEl) {
+      this.videoEl = document.getElementById('camera-feed');
+    }
+
     try {
+      // Stop any existing stream
+      if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop());
+      }
+
       const constraints = {
         video: {
           facingMode: { ideal: AppState.cameraFacingMode },
@@ -115,23 +123,37 @@ const CameraManager = {
         },
         audio: false,
       };
+
+      console.log('Requesting camera with constraints:', constraints);
       this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Got camera stream, setting to video element');
+
       this.videoEl.srcObject = this.stream;
+
+      // Wait for video to load
       return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn('Video metadata did not load, resolving anyway');
+          resolve(true);
+        }, 5000);
+
         this.videoEl.onloadedmetadata = () => {
-          this.videoEl.play();
+          clearTimeout(timeout);
+          console.log('Video metadata loaded, starting playback');
+          this.videoEl.play().catch(e => {
+            console.warn('Video play error:', e);
+          });
           resolve(true);
         };
       });
     } catch (err) {
-      console.error('Camera error:', err);
+      console.error('Camera initialization error:', err);
       return false;
     }
   },
 
   async toggleFacingMode() {
     AppState.cameraFacingMode = AppState.cameraFacingMode === 'environment' ? 'user' : 'environment';
-    this.stop();
     await this.init();
   },
 
@@ -693,12 +715,18 @@ const UIController = {
         if (cameras.length < 2) {
           toggleBtn.classList.add('hidden');
         } else {
-          toggleBtn.addEventListener('click', () => CameraManager.toggleFacingMode());
+          toggleBtn.addEventListener('click', () => this.toggleCamera());
         }
       });
     } else {
       toggleBtn.classList.add('hidden');
     }
+  },
+
+  async toggleCamera() {
+    this.shutterBtn.disabled = true;
+    await CameraManager.toggleFacingMode();
+    this.shutterBtn.disabled = false;
   },
 
   bindGalleryButtons() {
@@ -711,14 +739,14 @@ const UIController = {
     AppState.transition('poweron');
     SoundEngine.trigger('poweron');
 
-    // Wait for iris animation to complete
+    // Wait for iris animation to complete, then request camera
     const duration = 2800; // 2.2s iris + 0.6s fade
     setTimeout(() => {
-      this.showViewfinder();
+      this.initializeCamera();
     }, duration);
   },
 
-  async showViewfinder() {
+  async initializeCamera() {
     AppState.transition('viewfinder');
     const permitted = await CameraManager.init();
     if (!permitted) {
@@ -727,14 +755,34 @@ const UIController = {
   },
 
   showPermissionPrompt() {
+    const titleEl = document.getElementById('permission-title');
+    const textEl = document.getElementById('permission-text');
+    const btnEl = document.getElementById('allow-camera-btn');
+    const hintEl = document.getElementById('permission-hint');
+
+    titleEl.textContent = 'Camera Required';
+    textEl.textContent = 'This Polaroid camera needs access to your device\'s camera to work.';
+    btnEl.textContent = 'Allow Camera';
+    btnEl.disabled = false;
+    hintEl.textContent = 'You can change this in your browser settings at any time.';
+
     this.permissionOverlay.classList.remove('hidden');
   },
 
   async requestCameraPermission() {
-    this.permissionOverlay.classList.add('hidden');
+    const btnEl = document.getElementById('allow-camera-btn');
+    btnEl.disabled = true;
+    btnEl.textContent = 'Starting camera...';
+
     const permitted = await CameraManager.init();
-    if (!permitted) {
-      this.showPermissionPrompt();
+
+    if (permitted) {
+      this.permissionOverlay.classList.add('hidden');
+    } else {
+      btnEl.disabled = false;
+      btnEl.textContent = 'Try Again';
+      const textEl = document.getElementById('permission-text');
+      textEl.textContent = 'Camera access was denied. Please allow camera access and try again.';
     }
   },
 

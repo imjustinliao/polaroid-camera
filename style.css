@@ -159,10 +159,12 @@ button:disabled {
   justify-content: center;
   opacity: 0;
   transition: opacity 0.5s ease-out 2.3s;
+  overflow: hidden;
 }
 
 #scene-viewfinder.active {
   opacity: 1;
+  transition: opacity 0.3s ease-out;
 }
 
 #camera-feed {
@@ -172,6 +174,7 @@ button:disabled {
   height: 100%;
   object-fit: cover;
   object-position: center;
+  display: block;
 }
 
 /* Viewfinder Overlays */
@@ -828,11 +831,32 @@ button:disabled {
   transform: translateY(-2px);
 }
 
+.permission-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .permission-hint {
   font-family: var(--font-serif);
   font-size: 12px;
   color: rgba(240, 225, 200, 0.5);
   margin-top: 20px;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(240, 225, 200, 0.3);
+  border-top-color: var(--color-shutter-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 8px 0 0;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
