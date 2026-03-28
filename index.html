@@ -36,15 +36,17 @@
       <span class="hud-label style-name">CLASSIC</span>
     </div>
 
-    <!-- HUD: Bottom Controls — single row: [stack] [shutter] [theme-picker] -->
+    <!-- HUD: Bottom Controls — theme picker on top, shutter below, stack bottom-right -->
     <div class="hud-bottom">
-      <div id="photo-stack" class="photo-stack" aria-label="View gallery">
-        <span class="gallery-count-badge">0</span>
-      </div>
-      <button id="shutter-btn" class="shutter-button" aria-label="Take photo"></button>
       <div class="theme-picker-wrapper">
         <div id="style-picker" class="style-picker-strip"></div>
       </div>
+      <button id="shutter-btn" class="shutter-button" aria-label="Take photo"></button>
+    </div>
+
+    <!-- Photo stack — bottom right, hidden until first photo -->
+    <div id="photo-stack" class="photo-stack" aria-label="View gallery">
+      <span class="gallery-count-badge">0</span>
     </div>
 
     <!-- Toggle camera — top right area -->

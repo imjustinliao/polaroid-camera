@@ -332,43 +332,49 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 16px max(16px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
+  padding: 16px 16px max(24px, env(safe-area-inset-bottom));
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   pointer-events: auto;
   background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
 }
 
-/* ─── Photo Stack (left) ─── */
+/* ─── Photo Stack (bottom-right, hidden until first photo) ─── */
 
 .photo-stack {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  right: max(20px, env(safe-area-inset-right));
+  width: 64px;
+  height: 72px;
+  z-index: 31;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
 }
 
 .photo-stack.has-photos {
-  background: none;
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
 }
 
 /* Individual thumbnail in the stack */
 .stack-thumb {
   position: absolute;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 64px;
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(245, 240, 232, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border: 2.5px solid rgba(245, 240, 232, 0.9);
   transition: transform 300ms cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
@@ -393,14 +399,7 @@ button:disabled {
   transform: rotate(-1deg) translate(0, 0) scale(1);
 }
 
-/* Empty state placeholder */
-.photo-stack:not(.has-photos)::before {
-  content: '';
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  border: 2px dashed rgba(240, 225, 200, 0.25);
-}
+/* Empty state — fully hidden, no placeholder needed */
 
 .gallery-count-badge {
   position: absolute;
@@ -707,7 +706,7 @@ button:disabled {
 
 @keyframes polaroid-dismiss {
   0%   { transform: scale(1) translate(0, 0); opacity: 1; }
-  100% { transform: scale(0.15) translate(calc(-50vw + 40px), calc(50vh - 40px)); opacity: 0; }
+  100% { transform: scale(0.15) translate(calc(50vw - 60px), calc(50vh - 60px)); opacity: 0; }
 }
 
 /* No caption text on polaroid output */
@@ -991,13 +990,13 @@ button:disabled {
   }
 
   .photo-stack {
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 64px;
   }
 
   .stack-thumb {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 56px;
   }
 
   .gallery-grid {
@@ -1043,13 +1042,15 @@ button:disabled {
   }
 
   .photo-stack {
-    width: 46px;
-    height: 46px;
+    width: 50px;
+    height: 58px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    right: max(12px, env(safe-area-inset-right));
   }
 
   .stack-thumb {
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 50px;
   }
 
   .gallery-count-badge {
