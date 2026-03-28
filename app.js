@@ -740,19 +740,19 @@ const UIController = {
 
   startPowerOn() {
     console.log('Starting power-on sequence');
-    AppState.transition('poweron');
     SoundEngine.trigger('poweron');
 
-    // Wait for iris animation to complete
-    const duration = 2800; // 2.2s iris + 0.6s fade
+    // After iris animation completes, fade out poweron and show viewfinder
     setTimeout(() => {
-      console.log('Power-on complete, showing viewfinder');
+      console.log('Power-on complete, hiding overlay and showing viewfinder');
+      this.scenePoweron.classList.add('done');
       this.showViewfinder();
-    }, duration);
+    }, 2200);
   },
 
   showViewfinder() {
-    AppState.transition('viewfinder');
+    // Make viewfinder visible immediately
+    this.sceneViewfinder.classList.add('active');
     console.log('Viewfinder scene activated, initializing camera...');
 
     // Initialize camera in background
