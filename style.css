@@ -218,6 +218,11 @@ button:disabled {
   transform-origin: center center;
 }
 
+/* Mirror for selfie/front camera — feels like looking in a mirror */
+#camera-feed.mirror {
+  transform: scaleX(-1);
+}
+
 /* Viewfinder Overlays */
 
 .vf-grain {
@@ -753,6 +758,7 @@ button:disabled {
 /* ─── POLAROID CARD ─── */
 /* Canvas = photo only. The HTML card provides the polaroid frame. */
 
+/* Polaroid card — consistent ratio matching export (880:960 = 11:12) */
 .polaroid-card {
   position: relative;
   width: 260px;
@@ -761,11 +767,12 @@ button:disabled {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Photo area — true square, canvas fills edge-to-edge */
+/* Photo area — square, padded equally on top/left/right */
 .photo-wrap {
   position: relative;
-  width: calc(100% - 20px);
-  margin: 10px auto 0;
+  /* Padding ratio: 40/880 = 4.55% each side */
+  width: calc(100% - 9.1%);
+  margin: 4.55% auto 0;
   aspect-ratio: 1;
   background: var(--color-warm-dark);
   overflow: hidden;
@@ -778,9 +785,10 @@ button:disabled {
   object-fit: cover;
 }
 
-/* Thick bottom border area — signature Polaroid look */
+/* Bottom border — ratio: 120/880 = 13.6% of card width */
 .polaroid-bottom {
-  height: 56px;
+  height: 13.6%;
+  padding-bottom: 13.6%;
   position: relative;
 }
 
@@ -1271,15 +1279,29 @@ button:disabled {
 @media (max-width: 768px) {
   /* Frame: full width, shorter height so controls don't overlap camera view.
      The camera view is the top portion, controls sit in a bottom strip. */
+  /* Frame: full width, taller than square so controls have their own strip area.
+     The video stays square in the middle, top/bottom strips hold HUD elements. */
   .camera-frame {
     width: calc(100vw - 16px);
-    /* Use dvh for iOS Safari, fallback to vh. Leave 200px for browser chrome + controls below */
-    height: min(calc(100vw - 16px), calc(100dvh - 200px), calc(100vh - 200px));
+    /* Taller than square — extra height for HUD strips */
+    height: min(calc((100vw - 16px) * 1.25), calc(100dvh - 120px), calc(100vh - 120px));
     border-radius: 8px;
   }
 
   .camera-clip {
     border-radius: 8px;
+  }
+
+  /* Top/bottom HUD strips get subtle dark tint so controls are readable */
+  .hud-top {
+    padding: 10px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
+    border-radius: 8px 8px 0 0;
+  }
+
+  .hud-bottom {
+    padding: 10px 16px 14px;
+    gap: 10px;
   }
 
   .brand {
@@ -1291,19 +1313,9 @@ button:disabled {
     font-size: 14px;
   }
 
-  /* Tighter padding so HUD doesn't eat into the view */
-  .hud-top {
-    padding: 3% 5%;
-  }
-
-  .hud-bottom {
-    padding: 2% 5% 3%;
-    gap: 12px;
-  }
-
   .shutter-button {
-    width: 60px;
-    height: 60px;
+    width: 58px;
+    height: 58px;
   }
 
   .style-option {

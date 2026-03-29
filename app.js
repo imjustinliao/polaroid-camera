@@ -269,6 +269,19 @@ const CameraManager = {
 
       this.videoEl.srcObject = this.stream;
 
+      // Mirror for front/selfie camera
+      // On desktop/laptop: no facingMode in settings → it's a front webcam
+      // On mobile: facingMode 'user' = front, 'environment' = back
+      const videoTrack = this.stream.getVideoTracks()[0];
+      const trackSettings = videoTrack.getSettings?.() || {};
+      const isRearCamera = trackSettings.facingMode === 'environment';
+      this._isMirrored = !isRearCamera;
+      if (this._isMirrored) {
+        this.videoEl.classList.add('mirror');
+      } else {
+        this.videoEl.classList.remove('mirror');
+      }
+
       // Wait for video to load
       return new Promise((resolve) => {
         const timeout = setTimeout(() => {
@@ -339,6 +352,12 @@ const CameraManager = {
     canvas.height = 800;
     const ctx = canvas.getContext('2d');
 
+    // Mirror capture for front-facing cameras to match viewfinder
+    if (this._isMirrored) {
+      ctx.translate(800, 0);
+      ctx.scale(-1, 1);
+    }
+
     ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
     return canvas;
   },
@@ -391,6 +410,9 @@ const PolaroidRenderer = {
     if (style.vignette) {
       this.applyVignette(ctx, PHOTO_SIZE, PHOTO_SIZE);
     }
+
+    // Layer 6: White noise — subtle camera sensor noise for authentic feel
+    this.applyWhiteNoise(ctx, PHOTO_SIZE, PHOTO_SIZE, 0.015);
 
     return canvas;
   },
@@ -464,6 +486,31 @@ const PolaroidRenderer = {
     grad.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  },
+
+  applyWhiteNoise(ctx, width, height, intensity) {
+    // Subtle white noise — simulates camera sensor noise
+    const nc = document.createElement('canvas');
+    nc.width = width;
+    nc.height = height;
+    const nctx = nc.getContext('2d');
+
+    const dotCount = Math.floor(width * height * intensity);
+    for (let i = 0; i < dotCount; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const val = Math.random();
+      const alpha = Math.random() * 0.12;
+      nctx.fillStyle = val > 0.5
+        ? `rgba(255, 255, 255, ${alpha})`
+        : `rgba(0, 0, 0, ${alpha})`;
+      nctx.fillRect(x, y, 1, 1);
+    }
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.drawImage(nc, 0, 0);
     ctx.restore();
   },
 
@@ -583,6 +630,17 @@ const PolaroidRenderer = {
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
     ctx.lineWidth = 1;
     ctx.strokeRect(pad - 0.5, pad - 0.5, photoSize + 1, photoSize + 1);
+
+    // Date stamp in the bottom border area — handwritten style
+    const now = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dateStr = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+    ctx.save();
+    ctx.font = 'italic 22px Georgia, serif';
+    ctx.fillStyle = 'rgba(80, 65, 50, 0.4)';
+    ctx.textAlign = 'right';
+    ctx.fillText(dateStr, w - pad - 8, h - 30);
+    ctx.restore();
 
     return canvas;
   },
