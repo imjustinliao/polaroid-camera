@@ -1273,8 +1273,8 @@ button:disabled {
      The camera view is the top portion, controls sit in a bottom strip. */
   .camera-frame {
     width: calc(100vw - 16px);
-    /* Square based on width, but capped so it doesn't overflow the screen */
-    height: min(calc(100vw - 16px), calc(100vh - 120px));
+    /* Use dvh for iOS Safari, fallback to vh. Leave 200px for browser chrome + controls below */
+    height: min(calc(100vw - 16px), calc(100dvh - 200px), calc(100vh - 200px));
     border-radius: 8px;
   }
 
