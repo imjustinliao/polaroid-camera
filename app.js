@@ -217,13 +217,6 @@ const CameraManager = {
 
       this.videoEl.srcObject = this.stream;
 
-      // Set mirror class based on camera facing mode
-      if (AppState.cameraFacingMode === 'environment') {
-        this.videoEl.classList.add('rear-camera');
-      } else {
-        this.videoEl.classList.remove('rear-camera');
-      }
-
       // Wait for video to load
       return new Promise((resolve) => {
         const timeout = setTimeout(() => {
@@ -274,12 +267,6 @@ const CameraManager = {
     canvas.width = 800;
     canvas.height = 800;
     const ctx = canvas.getContext('2d');
-
-    // Mirror the capture for front camera to match the viewfinder
-    if (AppState.cameraFacingMode !== 'environment') {
-      ctx.translate(800, 0);
-      ctx.scale(-1, 1);
-    }
 
     ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
     return canvas;
@@ -1297,6 +1284,15 @@ const UIController = {
   rebuildPhotoStack() {
     // Remove existing thumbs
     this.photoStack.querySelectorAll('.stack-thumb').forEach(t => t.remove());
+
+    if (AppState.photos.length === 0) {
+      this.photoStack.classList.remove('has-photos');
+      return;
+    }
+
+    // Show the stack
+    this.photoStack.classList.add('has-photos');
+
     // Show last 3
     const last3 = AppState.photos.slice(-3);
     for (const photo of last3) {

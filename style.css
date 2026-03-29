@@ -219,12 +219,6 @@ button:disabled {
   object-fit: cover;
   display: block;
   transform-origin: center center;
-  /* Mirror front camera so it feels natural */
-  transform: scaleX(-1);
-}
-
-#camera-feed.rear-camera {
-  transform: scaleX(1);
 }
 
 /* Viewfinder Overlays */
