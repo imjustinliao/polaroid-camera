@@ -831,7 +831,6 @@ const UIController = {
     this.allowCameraBtn = document.getElementById('allow-camera-btn');
     this.galleryGrid = document.getElementById('gallery-grid');
     this.photoStack = document.getElementById('photo-stack');
-    this.galleryCountBadge = this.photoStack.querySelector('.gallery-count-badge');
     this.irisOverlay = document.querySelector('.iris-overlay');
   },
 
@@ -1216,39 +1215,25 @@ const UIController = {
     AppState.photos.push({ element: galleryCard, canvas, styleKey: AppState.currentStyle });
 
     this.galleryGrid.appendChild(galleryCard);
-    this.galleryCountBadge.textContent = AppState.photos.length;
-    this.updatePhotoStack(canvas);
+    // Count shown in film counter (top-left)
+    this.updatePhotoStack();
   },
 
-  updatePhotoStack(newCanvas) {
+  updatePhotoStack() {
+    this.rebuildPhotoStack();
+
+    // Animate the latest thumb (last child) flying in
     const stack = this.photoStack;
-    stack.classList.add('has-photos');
-
-    // Keep max 3 thumbnails in the stack
-    const thumbs = stack.querySelectorAll('.stack-thumb');
-    if (thumbs.length >= 3) {
-      thumbs[0].remove(); // remove oldest
+    const latest = stack.querySelector('.stack-thumb:last-child');
+    if (latest) {
+      latest.classList.add('flying');
+      const stackRect = stack.getBoundingClientRect();
+      const startX = (window.innerWidth / 2) - stackRect.left - (stackRect.width / 2);
+      const startY = (window.innerHeight / 2) - stackRect.top - (stackRect.height / 2);
+      latest.style.setProperty('--fly-start-x', startX + 'px');
+      latest.style.setProperty('--fly-start-y', startY + 'px');
+      setTimeout(() => latest.classList.remove('flying'), 500);
     }
-
-    // Create a thumbnail for the new photo
-    const thumb = document.createElement('div');
-    thumb.className = 'stack-thumb flying';
-    const miniCanvas = PolaroidRenderer.copyCanvas(newCanvas);
-    thumb.appendChild(miniCanvas);
-
-    // Calculate fly-from offset (center of screen to stack position)
-    const stackRect = stack.getBoundingClientRect();
-    const startX = (window.innerWidth / 2) - stackRect.left - (stackRect.width / 2);
-    const startY = (window.innerHeight / 2) - stackRect.top - (stackRect.height / 2);
-    thumb.style.setProperty('--fly-start-x', startX + 'px');
-    thumb.style.setProperty('--fly-start-y', startY + 'px');
-
-    stack.appendChild(thumb);
-
-    // Remove flying class after animation
-    setTimeout(() => {
-      thumb.classList.remove('flying');
-    }, 500);
   },
 
   openGallery() {
@@ -1277,7 +1262,7 @@ const UIController = {
     AppState.photoCount++;
     this.filmCounter.textContent = Math.max(0, AppState.photoCount);
     this.filmCounter.classList.remove('limit-reached');
-    this.galleryCountBadge.textContent = AppState.photos.length;
+    // Count shown in film counter (top-left)
 
     // Update photo stack
     this.rebuildPhotoStack();

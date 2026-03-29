@@ -153,7 +153,9 @@ button:disabled {
   position: fixed;
   inset: 0;
   z-index: 1;
-  background: var(--color-warm-dark);
+  /* Subtle warm texture on the side bars instead of plain black */
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 50%, #1a1510 60%, #0d0a07 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,16 +168,36 @@ button:disabled {
   opacity: 1;
 }
 
-/* Camera frame: centered square — everything lives inside this */
-.camera-frame {
+/* Subtle side decoration — faint film sprocket holes */
+#scene-viewfinder::before,
+#scene-viewfinder::after {
+  content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(100vw, 100vh);
-  height: min(100vw, 100vh);
+  top: 0;
+  bottom: 0;
+  width: calc((100vw - min(100vw, 100vh)) / 2);
+  z-index: 2;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 28px,
+    rgba(240, 225, 200, 0.03) 28px,
+    rgba(240, 225, 200, 0.03) 32px
+  );
+}
+
+#scene-viewfinder::before { left: 0; }
+#scene-viewfinder::after { right: 0; }
+
+/* Camera frame: centered square with margin inset */
+.camera-frame {
+  position: relative;
+  width: calc(min(100vw, 100vh) - 32px);
+  height: calc(min(100vw, 100vh) - 24px);
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(240, 225, 200, 0.06);
 }
 
 #camera-feed {
@@ -249,22 +271,37 @@ button:disabled {
 .vf-frame-guides::before {
   content: '';
   position: absolute;
-  inset: 6px;
-  border: 1.5px solid rgba(240, 225, 200, 0.15);
+  inset: 4px;
+  border: 1px solid rgba(240, 225, 200, 0.1);
   border-radius: 3px;
 }
 
-/* Center focus crosshair */
+/* Polaroid viewfinder — outer hollow rectangle + inner solid rectangle, slightly blurred */
 .vf-frame-guides::after {
   content: '';
   position: absolute;
-  width: 6px;
-  height: 6px;
-  background: var(--color-guide-lines);
-  border-radius: 50%;
+  width: 28px;
+  height: 40px;
   inset: 0;
   margin: auto;
-  opacity: 0.4;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
+  filter: blur(0.5px);
+  box-shadow: inset 0 0 0 6px transparent;
+}
+
+.vf-viewfinder-inner {
+  position: absolute;
+  width: 10px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 1px;
+  filter: blur(0.5px);
+  z-index: 14;
+  pointer-events: none;
 }
 
 .vf-breathing {
@@ -297,7 +334,7 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 16px 20px;
+  padding: 14px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -392,46 +429,21 @@ button:disabled {
   object-fit: cover;
 }
 
-/* Stack layering — bottom cards fan out */
-.stack-thumb:nth-child(1) {
+/* Stack layering — oldest at bottom, latest on top (last child) */
+.stack-thumb:nth-last-child(3) {
   z-index: 1;
-  transform: rotate(-6deg) translate(-3px, 3px) scale(0.92);
+  transform: rotate(-6deg) translate(-3px, 3px) scale(0.9);
 }
-.stack-thumb:nth-child(2) {
+.stack-thumb:nth-last-child(2) {
   z-index: 2;
-  transform: rotate(4deg) translate(2px, 1px) scale(0.96);
+  transform: rotate(4deg) translate(2px, 1px) scale(0.95);
 }
-.stack-thumb:nth-child(3) {
+.stack-thumb:nth-last-child(1) {
   z-index: 3;
   transform: rotate(-1deg) translate(0, 0) scale(1);
 }
 
 /* Empty state — fully hidden, no placeholder needed */
-
-.gallery-count-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 20px;
-  height: 20px;
-  background: var(--color-shutter-red);
-  color: var(--color-cream);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: var(--font-mono);
-  z-index: 10;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transition: opacity 200ms ease-out;
-}
-
-.photo-stack.has-photos .gallery-count-badge {
-  opacity: 1;
-}
 
 /* Photo fly animation — from center to stack */
 @keyframes fly-to-stack {
