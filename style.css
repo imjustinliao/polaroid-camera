@@ -597,7 +597,7 @@ button:disabled {
 .toggle-camera-btn {
   display: none;
   position: absolute;
-  bottom: -44px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 31;
@@ -1272,9 +1272,10 @@ button:disabled {
   /* Frame: full width, shorter height so controls don't overlap camera view.
      The camera view is the top portion, controls sit in a bottom strip. */
   .camera-frame {
-    width: calc(100vw - 12px);
-    height: calc(100vh - 80px);
+    width: calc(100vw - 16px);
+    height: calc(100vh - 90px);
     border-radius: 8px;
+    margin-top: -20px;
   }
 
   .camera-clip {
@@ -1352,19 +1353,22 @@ button:disabled {
   }
 
   .scene-credits {
-    position: absolute;
     left: 50%;
     top: auto;
-    bottom: 6px;
+    bottom: 4px;
     transform: translateX(-50%);
     flex-direction: row;
     align-items: center;
-    gap: 6px;
-    font-size: 10px;
+    gap: 5px;
+    font-size: 9px;
   }
 
   .scene-credits .credits-dot {
     display: inline;
+  }
+
+  .toggle-camera-btn {
+    bottom: 24px;
   }
 
   .permission-dialog {
