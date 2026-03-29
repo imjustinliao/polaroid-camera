@@ -491,9 +491,55 @@ const PolaroidRenderer = {
     return card;
   },
 
+  renderExport(photoCanvas, styleKey) {
+    // Renders a full polaroid frame canvas for download
+    // Proportions: equal padding top/left/right, thick bottom
+    const style = STYLES[styleKey];
+    const pad = 40;        // top, left, right padding
+    const bottomPad = 120; // thick bottom border
+    const photoSize = PHOTO_SIZE; // 800
+    const w = photoSize + pad * 2;        // 880
+    const h = photoSize + pad + bottomPad; // 960
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Paper background color
+    ctx.fillStyle = style.paperColor || '#f5f0e8';
+    ctx.fillRect(0, 0, w, h);
+
+    // Paper texture overlay
+    const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
+    // Draw subtle noise grain for texture
+    const grainCount = Math.floor(w * h * 0.002);
+    for (let i = 0; i < grainCount; i++) {
+      const x = Math.random() * w;
+      const y = Math.random() * h;
+      const alpha = Math.random() * tex.opacity * 3;
+      ctx.fillStyle = Math.random() > 0.5
+        ? `rgba(0, 0, 0, ${alpha})`
+        : `rgba(255, 255, 255, ${alpha * 0.5})`;
+      ctx.fillRect(x, y, 1, 1);
+    }
+
+    // Draw the photo
+    ctx.drawImage(photoCanvas, pad, pad, photoSize, photoSize);
+
+    // Subtle border around photo area
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pad - 0.5, pad - 0.5, photoSize + 1, photoSize + 1);
+
+    return canvas;
+  },
+
   downloadCanvas(canvas, styleKey) {
+    // Render the full polaroid frame for export
+    const exportCanvas = this.renderExport(canvas, styleKey);
     try {
-      canvas.toBlob((blob) => {
+      exportCanvas.toBlob((blob) => {
         if (!blob) {
           alert('Unable to save image. Your browser may restrict this for privacy reasons.');
           return;
