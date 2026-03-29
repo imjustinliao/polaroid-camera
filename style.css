@@ -233,14 +233,16 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Corner brackets */
+/* Square frame guide — matches the polaroid's square photo crop */
 .vf-frame-guides::before {
   content: '';
   position: absolute;
-  top: 48px;
-  left: 16px;
-  right: 16px;
-  bottom: 120px;
+  /* Center a square that fits within the viewport, leaving room for HUD */
+  top: 50%;
+  left: 50%;
+  width: min(70vw, 55vh);
+  height: min(70vw, 55vh);
+  transform: translate(-50%, -55%);
   border: 1.5px solid rgba(240, 225, 200, 0.2);
   border-radius: 4px;
 }
@@ -517,20 +519,7 @@ button:disabled {
   );
 }
 
-/* Center selection indicator — thin vertical line */
-.theme-picker-wrapper::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 38px;
-  transform: translateX(-50%);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  border-radius: 8px;
-  z-index: 2;
-  pointer-events: none;
-}
+/* No extra indicator — the selected style's white border is enough */
 
 .style-picker-strip {
   display: flex;
