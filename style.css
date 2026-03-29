@@ -190,14 +190,14 @@ button:disabled {
 #scene-viewfinder::before { left: 0; }
 #scene-viewfinder::after { right: 0; }
 
-/* Camera frame: centered square with margin inset */
+/* Camera frame: centered square with margin inset — sides bigger than top/bottom */
 .camera-frame {
   position: relative;
-  width: calc(min(100vw, 100vh) - 32px);
-  height: calc(min(100vw, 100vh) - 24px);
+  width: calc(min(100vw, 100vh) - 80px);
+  height: calc(min(100vw, 100vh) - 48px);
   overflow: hidden;
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px rgba(240, 225, 200, 0.06);
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(240, 225, 200, 0.08);
 }
 
 #camera-feed {

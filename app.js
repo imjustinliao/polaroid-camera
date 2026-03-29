@@ -230,6 +230,17 @@ const CameraManager = {
           this.videoEl.play().catch(e => {
             console.warn('Video play error:', e);
           });
+
+          // Watch for track ending (device sleep, tab switch, etc.)
+          const tracks = this.stream.getTracks();
+          tracks.forEach(track => {
+            track.onended = () => {
+              console.log('Camera track ended — showing reconnect');
+              AppState.isCameraReady = false;
+              UIController.showPermissionPrompt();
+            };
+          });
+
           resolve(true);
         };
       });
@@ -1157,17 +1168,11 @@ const UIController = {
       const polaroidCanvas = PolaroidRenderer.render(photoCanvas, AppState.currentStyle);
       const polaroidElement = PolaroidRenderer.buildPolaroidElement(polaroidCanvas, AppState.currentStyle);
 
-      // Inject into eject stage and animate
+      // Inject into eject stage and animate — block shutter until fully done
       setTimeout(() => {
         this.ejectionStage.innerHTML = '';
         polaroidElement.classList.add('ejecting');
         this.ejectionStage.appendChild(polaroidElement);
-
-        // Re-enable shutter immediately after eject starts (user can shoot again)
-        setTimeout(() => {
-          AppState.isCapturing = false;
-          this.shutterBtn.disabled = false;
-        }, 1200);
 
         // After eject settles, dismiss it to gallery
         setTimeout(() => {
@@ -1175,11 +1180,13 @@ const UIController = {
           polaroidElement.classList.add('dismissing');
           this.addToGallery(polaroidElement, polaroidCanvas);
 
-          // Clean up eject stage after dismiss animation
+          // Clean up eject stage and re-enable shutter after dismiss
           setTimeout(() => {
             this.ejectionStage.innerHTML = '';
+            AppState.isCapturing = false;
+            this.shutterBtn.disabled = false;
           }, 600);
-        }, 2200);
+        }, 2000);
       }, 200);
 
       // Update film counter
@@ -1342,3 +1349,16 @@ document.addEventListener('click', () => {
 document.addEventListener('touchstart', () => {
   SoundEngine.ensureContext();
 }, { once: true });
+
+// Re-check camera when page becomes visible again (device wake, tab switch)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && AppState.isCameraReady) {
+    // Check if stream is still active
+    const stream = CameraManager.stream;
+    if (!stream || stream.getTracks().every(t => t.readyState === 'ended')) {
+      console.log('Camera stream lost after visibility change');
+      AppState.isCameraReady = false;
+      UIController.showPermissionPrompt();
+    }
+  }
+});
