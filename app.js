@@ -411,18 +411,34 @@ const PolaroidRenderer = {
     const bottom = document.createElement('div');
     bottom.className = 'polaroid-bottom';
 
-    // Download overlay — subtle icon on hover only
-    const dlOverlay = document.createElement('div');
-    dlOverlay.className = 'download-overlay';
-    dlOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-    dlOverlay.addEventListener('click', (e) => {
+    // Hover actions: expand + download
+    const actions = document.createElement('div');
+    actions.className = 'photo-actions';
+
+    const expandBtn = document.createElement('div');
+    expandBtn.className = 'photo-action-btn';
+    expandBtn.title = 'Expand';
+    expandBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+    expandBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      UIController.showLightbox(canvas, styleKey);
+    });
+
+    const dlBtn = document.createElement('div');
+    dlBtn.className = 'photo-action-btn';
+    dlBtn.title = 'Download';
+    dlBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    dlBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.downloadCanvas(canvas, styleKey);
     });
 
+    actions.appendChild(expandBtn);
+    actions.appendChild(dlBtn);
+
     card.appendChild(photoWrap);
     card.appendChild(bottom);
-    card.appendChild(dlOverlay);
+    card.appendChild(actions);
 
     return card;
   },
@@ -783,14 +799,25 @@ const UIController = {
 
   initStylePicker() {
     const picker = document.getElementById('style-picker');
+    let firstOption = null;
     for (const [key, style] of Object.entries(STYLES)) {
       const option = document.createElement('div');
       option.className = 'style-option';
-      if (key === 'classic') option.classList.add('selected');
+      if (key === 'classic') {
+        option.classList.add('selected');
+        firstOption = option;
+      }
       option.style.backgroundColor = style.borderColor;
       option.title = style.name;
       option.addEventListener('click', () => this.selectStyle(key, option));
       picker.appendChild(option);
+    }
+    // Center the initially selected option after DOM renders
+    if (firstOption) {
+      requestAnimationFrame(() => {
+        const wrapperWidth = picker.parentElement.offsetWidth;
+        picker.scrollLeft = firstOption.offsetLeft - (wrapperWidth / 2) + (firstOption.offsetWidth / 2);
+      });
     }
   },
 
@@ -799,6 +826,16 @@ const UIController = {
     element.classList.add('selected');
     AppState.currentStyle = key;
     this.styleName.textContent = STYLES[key].name.toUpperCase();
+
+    // Scroll selected option to center of the picker
+    const strip = document.getElementById('style-picker');
+    const wrapperWidth = strip.parentElement.offsetWidth;
+    const elLeft = element.offsetLeft;
+    const elWidth = element.offsetWidth;
+    strip.scrollTo({
+      left: elLeft - (wrapperWidth / 2) + (elWidth / 2),
+      behavior: 'smooth',
+    });
   },
 
   bindShutterButton() {
@@ -1050,6 +1087,33 @@ const UIController = {
   closeGallery() {
     this.sceneGallery.classList.remove('active');
     AppState.transition('viewfinder');
+  },
+
+  showLightbox(canvas, styleKey) {
+    // Remove existing lightbox if any
+    const existing = document.querySelector('.photo-lightbox');
+    if (existing) existing.remove();
+
+    const lightbox = document.createElement('div');
+    lightbox.className = 'photo-lightbox';
+
+    // Build a large polaroid card for display
+    const card = PolaroidRenderer.buildPolaroidElement(canvas, styleKey, true);
+    const devOverlay = card.querySelector('.develop-overlay');
+    if (devOverlay) devOverlay.remove();
+    const actionsOverlay = card.querySelector('.photo-actions');
+    if (actionsOverlay) actionsOverlay.remove();
+
+    lightbox.appendChild(card);
+    lightbox.addEventListener('click', () => {
+      lightbox.classList.remove('active');
+      setTimeout(() => lightbox.remove(), 200);
+    });
+    // Prevent closing when clicking the card itself
+    card.addEventListener('click', (e) => e.stopPropagation());
+
+    document.body.appendChild(lightbox);
+    requestAnimationFrame(() => lightbox.classList.add('active'));
   },
 };
 
