@@ -1199,7 +1199,7 @@ const UIController = {
     this.sceneFlash.classList.add('active');
   },
 
-  addToGallery(element, canvas) {
+  addToGallery(_element, canvas) {
     // Build a fresh gallery card with a COPY of the canvas (cloned canvas is blank)
     const galleryCard = PolaroidRenderer.buildPolaroidElement(canvas, AppState.currentStyle, true);
     galleryCard.classList.add('gallery-photo');
