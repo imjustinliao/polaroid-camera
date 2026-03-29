@@ -1355,7 +1355,7 @@ button:disabled {
   .scene-credits {
     left: 50%;
     top: auto;
-    bottom: 4px;
+    bottom: max(16px, env(safe-area-inset-bottom));
     transform: translateX(-50%);
     flex-direction: row;
     align-items: center;
@@ -1368,7 +1368,7 @@ button:disabled {
   }
 
   .toggle-camera-btn {
-    bottom: 24px;
+    bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px));
   }
 
   .permission-dialog {
