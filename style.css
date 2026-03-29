@@ -1273,9 +1273,9 @@ button:disabled {
      The camera view is the top portion, controls sit in a bottom strip. */
   .camera-frame {
     width: calc(100vw - 16px);
-    height: calc(100vh - 90px);
+    /* Square based on width, but capped so it doesn't overflow the screen */
+    height: min(calc(100vw - 16px), calc(100vh - 120px));
     border-radius: 8px;
-    margin-top: -20px;
   }
 
   .camera-clip {
