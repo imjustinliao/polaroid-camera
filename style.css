@@ -275,14 +275,14 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Frame guide — inset border with more spacing on sides than top/bottom */
+/* Frame guide — proportional inset, sides > top/bottom */
 .vf-frame-guides::before {
   content: '';
   position: absolute;
-  top: 12px;
-  bottom: 12px;
-  left: 20px;
-  right: 20px;
+  top: 2.5%;
+  bottom: 2.5%;
+  left: 4%;
+  right: 4%;
   border: 1px solid rgba(240, 225, 200, 0.12);
   border-radius: 6px;
 }
@@ -344,7 +344,7 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 20px 28px;
+  padding: 3.5% 5%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -386,7 +386,7 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 20px 28px max(24px, env(safe-area-inset-bottom));
+  padding: 3% 5% max(3.5%, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -399,8 +399,8 @@ button:disabled {
 
 .photo-stack {
   position: absolute;
-  bottom: 24px;
-  right: 28px;
+  bottom: 3.5%;
+  right: 5%;
   width: 64px;
   height: 72px;
   z-index: 31;
@@ -595,8 +595,8 @@ button:disabled {
 
 .toggle-camera-btn {
   position: absolute;
-  top: 20px;
-  right: 28px;
+  top: 3.5%;
+  right: 5%;
   width: 44px;
   height: 44px;
   display: flex;
@@ -614,15 +614,13 @@ button:disabled {
   opacity: 0.9;
 }
 
-.toggle-camera-btn.hidden {
-  display: none;
-}
+/* Toggle always visible — harmless on single-camera devices */
 
 /* ─── Zoom Ruler ─── */
 
 .zoom-ruler {
   position: absolute;
-  right: 28px;
+  right: 5%;
   top: 50%;
   transform: translateY(-50%);
   z-index: 31;
@@ -950,8 +948,8 @@ button:disabled {
 /* Camera page social links — bottom left of frame */
 .cam-social {
   position: absolute;
-  bottom: 24px;
-  left: 28px;
+  bottom: 3.5%;
+  left: 5%;
   z-index: 31;
   display: flex;
   align-items: center;
@@ -1304,8 +1302,6 @@ button:disabled {
   .photo-stack {
     width: 60px;
     height: 68px;
-    bottom: 18px;
-    right: 18px;
   }
 
   .stack-thumb {

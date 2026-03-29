@@ -953,18 +953,8 @@ const UIController = {
 
   bindCameraToggle() {
     const toggleBtn = document.getElementById('toggle-camera');
-    if (navigator.mediaDevices?.enumerateDevices) {
-      navigator.mediaDevices.enumerateDevices().then(devices => {
-        const cameras = devices.filter(d => d.kind === 'videoinput');
-        if (cameras.length < 2) {
-          toggleBtn.classList.add('hidden');
-        } else {
-          toggleBtn.addEventListener('click', () => this.toggleCamera());
-        }
-      });
-    } else {
-      toggleBtn.classList.add('hidden');
-    }
+    // Always bind — if device has only 1 camera, toggling is harmless
+    toggleBtn.addEventListener('click', () => this.toggleCamera());
   },
 
   async toggleCamera() {
