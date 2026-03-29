@@ -197,6 +197,35 @@ const PhotoStorage = {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
+// CUSTOM THEME STORAGE — persist custom themes in localStorage
+// ══════════════════════════════════════════════════════════════════════════════
+
+const CustomThemeStorage = {
+  KEY: 'polaroid-custom-themes',
+  save(themes) {
+    try {
+      const data = themes.map(t => ({
+        id: t.id,
+        type: t.type,
+        color: t.color || null,
+        dataUrl: t.dataUrl || null,
+        name: t.name,
+      }));
+      localStorage.setItem(this.KEY, JSON.stringify(data));
+    } catch (e) {
+      console.warn('Could not save custom themes:', e);
+    }
+  },
+  load() {
+    try {
+      return JSON.parse(localStorage.getItem(this.KEY) || '[]');
+    } catch (e) {
+      return [];
+    }
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
 // APP STATE
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -208,8 +237,7 @@ const AppState = {
   isCapturing: false,
   isCameraReady: false,
   cameraFacingMode: 'environment', // 'environment' or 'user'
-  customBgUrl: null, // data URL for custom theme background
-  customBgImg: null, // loaded Image element for export
+  customThemes: [], // array of custom theme objects
 
   transition(to) {
     console.log('Transitioning to state:', to);
@@ -344,45 +372,18 @@ const CameraManager = {
   capture(zoomLevel = 1) {
     const vw = this.videoEl.videoWidth || 1280;
     const vh = this.videoEl.videoHeight || 960;
-
     const canvas = document.createElement('canvas');
     canvas.width = 800;
     canvas.height = 800;
     const ctx = canvas.getContext('2d');
-
-    // Mirror capture for front-facing cameras to match viewfinder
     if (this._isMirrored) {
       ctx.translate(800, 0);
       ctx.scale(-1, 1);
     }
-
-    if (zoomLevel >= 1) {
-      // Zoom in: crop to center square divided by zoom level
-      const side = Math.min(vw, vh) / zoomLevel;
-      const sx = (vw - side) / 2;
-      const sy = (vh - side) / 2;
-      ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
-    } else {
-      // Wide lens (< 1x): show wider field of view with vignette falloff
-      const baseSide = Math.min(vw, vh);
-      const t = Math.min(1, (1 - zoomLevel) / 0.5); // 0 at 1x, 1 at 0.5x
-      // Expand crop beyond the square to show more of the video frame
-      const cropW = Math.min(vw, baseSide + t * (vw - baseSide));
-      const cropH = Math.min(vh, baseSide + t * (vh - baseSide));
-      const sx = (vw - cropW) / 2;
-      const sy = (vh - cropH) / 2;
-      ctx.drawImage(this.videoEl, sx, sy, cropW, cropH, 0, 0, 800, 800);
-
-      // Wide-angle edge vignette — blends naturally instead of black bars
-      const vigStrength = Math.min(0.45, (1 - zoomLevel) * 0.7);
-      const grad = ctx.createRadialGradient(400, 400, 260, 400, 400, 400);
-      grad.addColorStop(0, 'rgba(0,0,0,0)');
-      grad.addColorStop(0.8, 'rgba(0,0,0,0)');
-      grad.addColorStop(1, `rgba(0,0,0,${vigStrength})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 800, 800);
-    }
-
+    const side = Math.min(vw, vh) / zoomLevel;
+    const sx = (vw - side) / 2;
+    const sy = (vh - side) / 2;
+    ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
     return canvas;
   },
 
@@ -552,9 +553,14 @@ const PolaroidRenderer = {
     const card = document.createElement('div');
     card.className = 'polaroid-card';
 
-    // Apply background: custom uploaded image or paper texture
-    if (styleKey === 'custom' && AppState.customBgUrl) {
-      card.style.background = `url(${AppState.customBgUrl}) center/cover`;
+    // Apply background: custom theme or paper texture
+    const customTheme = AppState.customThemes.find(t => t.id === styleKey);
+    if (customTheme) {
+      if (customTheme.type === 'color') {
+        card.style.backgroundColor = customTheme.color;
+      } else if (customTheme.type === 'image' && customTheme.dataUrl) {
+        card.style.background = `url(${customTheme.dataUrl}) center/cover`;
+      }
     } else {
       const paperBg = style.paperColor || '#f5f0e8';
       const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
@@ -577,6 +583,14 @@ const PolaroidRenderer = {
     // Thick bottom border (signature Polaroid)
     const bottom = document.createElement('div');
     bottom.className = 'polaroid-bottom';
+
+    // Date stamp
+    const dateEl = document.createElement('div');
+    dateEl.className = 'polaroid-date';
+    const photoDate = timestamp ? new Date(timestamp) : new Date();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    dateEl.textContent = `${months[photoDate.getMonth()]} ${photoDate.getDate()}, ${photoDate.getFullYear()}`;
+    bottom.appendChild(dateEl);
 
     // Hover actions: expand + download
     const actions = document.createElement('div');
@@ -624,13 +638,13 @@ const PolaroidRenderer = {
 
   renderExport(photoCanvas, styleKey, timestamp) {
     // Renders a full polaroid frame canvas for download
-    // Matches CSS card ratio: 5% side/top padding, 18% bottom
+    // Matches CSS card ratio: 5% side/top padding, 22% bottom
     const style = STYLES[styleKey] || STYLES.classic;
     const photoSize = PHOTO_SIZE; // 800
     // photo is 90% of width → width = photoSize / 0.9
     const w = Math.round(photoSize / 0.9);     // ~889
     const pad = Math.round(w * 0.05);           // ~44 (5% each side/top)
-    const bottomPad = Math.round(w * 0.18);     // ~160 (18% bottom)
+    const bottomPad = Math.round(w * 0.22);     // ~196 (22% bottom)
     const h = pad + photoSize + bottomPad;       // ~1004
 
     const canvas = document.createElement('canvas');
@@ -638,21 +652,20 @@ const PolaroidRenderer = {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
 
-    // Background: custom image or paper color
-    if (styleKey === 'custom' && AppState.customBgImg) {
-      // Draw custom background image, covering the full frame
-      const img = AppState.customBgImg;
+    // Background: custom theme or paper color
+    const customTheme = AppState.customThemes.find(t => t.id === styleKey);
+    if (customTheme && customTheme.type === 'image' && customTheme._img) {
+      // Draw custom background image
+      const img = customTheme._img;
       const imgAr = img.width / img.height;
       const frameAr = w / h;
       let sx = 0, sy = 0, sw = img.width, sh = img.height;
-      if (imgAr > frameAr) {
-        sw = img.height * frameAr;
-        sx = (img.width - sw) / 2;
-      } else {
-        sh = img.width / frameAr;
-        sy = (img.height - sh) / 2;
-      }
+      if (imgAr > frameAr) { sw = img.height * frameAr; sx = (img.width - sw) / 2; }
+      else { sh = img.width / frameAr; sy = (img.height - sh) / 2; }
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+    } else if (customTheme && customTheme.type === 'color') {
+      ctx.fillStyle = customTheme.color;
+      ctx.fillRect(0, 0, w, h);
     } else {
       ctx.fillStyle = style.paperColor || '#f5f0e8';
       ctx.fillRect(0, 0, w, h);
@@ -719,9 +732,9 @@ const PolaroidRenderer = {
         }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        const fileTimestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
         a.href = url;
-        a.download = `polaroid-${styleKey}-${timestamp}.png`;
+        a.download = `polaroid-${styleKey}-${fileTimestamp}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1091,13 +1104,13 @@ const UIController = {
     const picker = document.getElementById('style-picker');
     this.styleOptions = [];
 
+    // Built-in styles
     for (const [key, style] of Object.entries(STYLES)) {
       const option = document.createElement('div');
       option.className = 'style-option';
       option.dataset.styleKey = key;
       option.style.backgroundColor = style.borderColor;
       option.title = style.name;
-      // Clicking scrolls to center (which then auto-selects)
       option.addEventListener('click', () => {
         const wrapperWidth = picker.parentElement.offsetWidth;
         picker.scrollTo({
@@ -1109,62 +1122,30 @@ const UIController = {
       this.styleOptions.push({ key, element: option });
     }
 
-    // Add custom upload option at the end
-    const customOption = document.createElement('div');
-    customOption.className = 'style-option custom-upload-option';
-    customOption.dataset.styleKey = 'custom';
-    customOption.title = 'Custom';
-    customOption.innerHTML = '<span class="custom-plus">+</span>';
-    customOption.addEventListener('click', () => {
-      if (!AppState.customBgUrl) {
-        document.getElementById('custom-bg-input').click();
-      } else {
-        // Already has image — scroll to center
-        const wrapperWidth = picker.parentElement.offsetWidth;
-        picker.scrollTo({
-          left: customOption.offsetLeft - (wrapperWidth / 2) + (customOption.offsetWidth / 2),
-          behavior: 'smooth',
-        });
-      }
-    });
-    picker.appendChild(customOption);
-    this.styleOptions.push({ key: 'custom', element: customOption });
+    // Load and create custom themes
+    AppState.customThemes = CustomThemeStorage.load();
+    for (const theme of AppState.customThemes) {
+      this.addCustomThemeOption(theme, true);
+    }
 
-    // Handle custom background upload
-    document.getElementById('custom-bg-input').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        AppState.customBgUrl = ev.target.result;
-        // Pre-load Image for export rendering
-        const img = new Image();
-        img.onload = () => { AppState.customBgImg = img; };
-        img.src = AppState.customBgUrl;
-        customOption.style.backgroundImage = `url(${AppState.customBgUrl})`;
-        customOption.classList.add('has-image');
-        // Select the custom style
-        const wrapperWidth = picker.parentElement.offsetWidth;
-        picker.scrollTo({
-          left: customOption.offsetLeft - (wrapperWidth / 2) + (customOption.offsetWidth / 2),
-          behavior: 'smooth',
-        });
-        AppState.currentStyle = 'custom';
-      };
-      reader.readAsDataURL(file);
-      e.target.value = ''; // reset so same file can be re-uploaded
-    });
+    // Add "+" button at the end
+    this.customPlusBtn = document.createElement('div');
+    this.customPlusBtn.className = 'style-option custom-upload-option';
+    this.customPlusBtn.title = 'Custom';
+    this.customPlusBtn.innerHTML = '<span class="custom-plus">+</span>';
+    this.customPlusBtn.addEventListener('click', () => this.openThemeManager());
+    picker.appendChild(this.customPlusBtn);
+    this.styleOptions.push({ key: '__plus__', element: this.customPlusBtn });
 
-    // Scroll listener — whichever option is closest to center gets selected
+    // Scroll listener
     let scrollTimeout;
     picker.addEventListener('scroll', () => {
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => this.selectCenteredStyle(), 60);
-      // Real-time visual feedback during scroll
       this.updatePickerVisuals();
     });
 
-    // Center first option — retry until wrapper has width (it starts hidden)
+    // Center first option
     const centerFirst = () => {
       const wrapperWidth = picker.parentElement.offsetWidth;
       if (wrapperWidth === 0) {
@@ -1176,9 +1157,263 @@ const UIController = {
       this.selectCenteredStyle();
       this.updatePickerVisuals();
     };
-    // Also re-center after viewfinder becomes visible
     setTimeout(centerFirst, 100);
-    setTimeout(centerFirst, 2500); // after power-on animation completes
+    setTimeout(centerFirst, 2500);
+  },
+
+  addCustomThemeOption(theme, skipAnimation) {
+    const picker = document.getElementById('style-picker');
+    const option = document.createElement('div');
+    option.className = 'style-option custom-theme';
+    if (!skipAnimation) option.classList.add('new-theme');
+    option.dataset.styleKey = theme.id;
+    option.title = theme.name;
+
+    if (theme.type === 'color') {
+      option.style.backgroundColor = theme.color;
+    } else if (theme.type === 'image' && theme.dataUrl) {
+      option.style.backgroundImage = `url(${theme.dataUrl})`;
+    }
+
+    if (theme.type === 'image' && theme.dataUrl && !theme._img) {
+      const img = new Image();
+      img.onload = () => { theme._img = img; };
+      img.src = theme.dataUrl;
+    }
+
+    option.addEventListener('click', () => {
+      const wrapperWidth = picker.parentElement.offsetWidth;
+      picker.scrollTo({
+        left: option.offsetLeft - (wrapperWidth / 2) + (option.offsetWidth / 2),
+        behavior: 'smooth',
+      });
+    });
+
+    // Insert before the + button
+    if (this.customPlusBtn && this.customPlusBtn.parentNode) {
+      picker.insertBefore(option, this.customPlusBtn);
+    } else {
+      picker.appendChild(option);
+    }
+
+    // Insert in styleOptions before the __plus__ entry
+    const plusIdx = this.styleOptions.findIndex(o => o.key === '__plus__');
+    if (plusIdx !== -1) {
+      this.styleOptions.splice(plusIdx, 0, { key: theme.id, element: option });
+    } else {
+      this.styleOptions.push({ key: theme.id, element: option });
+    }
+
+    if (!skipAnimation) {
+      setTimeout(() => option.classList.remove('new-theme'), 400);
+    }
+  },
+
+  removeCustomThemeOption(themeId) {
+    const idx = this.styleOptions.findIndex(o => o.key === themeId);
+    if (idx !== -1) {
+      this.styleOptions[idx].element.remove();
+      this.styleOptions.splice(idx, 1);
+    }
+    // If current style was this theme, switch to classic
+    if (AppState.currentStyle === themeId) {
+      AppState.currentStyle = 'classic';
+    }
+  },
+
+  openThemeManager() {
+    const mgr = document.getElementById('theme-manager');
+    mgr.classList.remove('hidden');
+    this.renderThemeList();
+
+    // Bind close
+    document.getElementById('close-theme-mgr').onclick = () => mgr.classList.add('hidden');
+    mgr.addEventListener('click', (e) => { if (e.target === mgr) mgr.classList.add('hidden'); });
+
+    // Bind add color
+    document.getElementById('add-color-theme').onclick = () => {
+      const colorInput = document.getElementById('custom-color-input');
+      colorInput.click();
+      colorInput.onchange = () => {
+        const color = colorInput.value;
+        const theme = {
+          id: 'ct-' + Date.now(),
+          type: 'color',
+          color: color,
+          name: color.toUpperCase(),
+        };
+        AppState.customThemes.push(theme);
+        CustomThemeStorage.save(AppState.customThemes);
+        this.addCustomThemeOption(theme, false);
+        this.renderThemeList();
+        // Scroll to the new theme
+        const picker = document.getElementById('style-picker');
+        const opt = this.styleOptions.find(o => o.key === theme.id);
+        if (opt) {
+          const wrapperWidth = picker.parentElement.offsetWidth;
+          setTimeout(() => {
+            picker.scrollTo({
+              left: opt.element.offsetLeft - (wrapperWidth / 2) + (opt.element.offsetWidth / 2),
+              behavior: 'smooth',
+            });
+          }, 100);
+        }
+      };
+    };
+
+    // Bind add image
+    document.getElementById('add-image-theme').onclick = () => {
+      const fileInput = document.getElementById('custom-image-input');
+      fileInput.click();
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const theme = {
+            id: 'ct-' + Date.now(),
+            type: 'image',
+            dataUrl: ev.target.result,
+            name: file.name.replace(/\.[^.]+$/, '').slice(0, 16),
+          };
+          AppState.customThemes.push(theme);
+          CustomThemeStorage.save(AppState.customThemes);
+          this.addCustomThemeOption(theme, false);
+          this.renderThemeList();
+          const picker = document.getElementById('style-picker');
+          const opt = this.styleOptions.find(o => o.key === theme.id);
+          if (opt) {
+            const wrapperWidth = picker.parentElement.offsetWidth;
+            setTimeout(() => {
+              picker.scrollTo({
+                left: opt.element.offsetLeft - (wrapperWidth / 2) + (opt.element.offsetWidth / 2),
+                behavior: 'smooth',
+              });
+            }, 100);
+          }
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = '';
+      };
+    };
+  },
+
+  renderThemeList() {
+    const list = document.getElementById('theme-list');
+    list.innerHTML = '';
+
+    // Built-in section label
+    const builtinLabel = document.createElement('div');
+    builtinLabel.className = 'theme-list-label';
+    builtinLabel.textContent = 'Built-in';
+    list.appendChild(builtinLabel);
+
+    // Built-in themes
+    for (const [key, style] of Object.entries(STYLES)) {
+      const item = document.createElement('div');
+      item.className = 'theme-list-item';
+      const swatch = document.createElement('div');
+      swatch.className = 'theme-list-swatch';
+      swatch.style.backgroundColor = style.borderColor;
+      const name = document.createElement('span');
+      name.className = 'theme-list-name';
+      name.textContent = style.name;
+      item.appendChild(swatch);
+      item.appendChild(name);
+      list.appendChild(item);
+    }
+
+    // Custom section
+    if (AppState.customThemes.length > 0) {
+      const customLabel = document.createElement('div');
+      customLabel.className = 'theme-list-label';
+      customLabel.textContent = 'Custom';
+      list.appendChild(customLabel);
+
+      AppState.customThemes.forEach((theme, i) => {
+        const item = document.createElement('div');
+        item.className = 'theme-list-item';
+
+        const swatch = document.createElement('div');
+        swatch.className = 'theme-list-swatch';
+        if (theme.type === 'color') {
+          swatch.style.backgroundColor = theme.color;
+        } else if (theme.dataUrl) {
+          swatch.style.backgroundImage = `url(${theme.dataUrl})`;
+        }
+
+        const name = document.createElement('span');
+        name.className = 'theme-list-name';
+        name.textContent = theme.name;
+
+        const actions = document.createElement('div');
+        actions.className = 'theme-list-actions';
+
+        // Move up
+        if (i > 0) {
+          const upBtn = document.createElement('button');
+          upBtn.className = 'theme-list-btn';
+          upBtn.innerHTML = '&#x25B2;';
+          upBtn.title = 'Move up';
+          upBtn.addEventListener('click', () => {
+            [AppState.customThemes[i - 1], AppState.customThemes[i]] =
+              [AppState.customThemes[i], AppState.customThemes[i - 1]];
+            CustomThemeStorage.save(AppState.customThemes);
+            this.rebuildCustomThemeOptions();
+            this.renderThemeList();
+          });
+          actions.appendChild(upBtn);
+        }
+
+        // Move down
+        if (i < AppState.customThemes.length - 1) {
+          const downBtn = document.createElement('button');
+          downBtn.className = 'theme-list-btn';
+          downBtn.innerHTML = '&#x25BC;';
+          downBtn.title = 'Move down';
+          downBtn.addEventListener('click', () => {
+            [AppState.customThemes[i], AppState.customThemes[i + 1]] =
+              [AppState.customThemes[i + 1], AppState.customThemes[i]];
+            CustomThemeStorage.save(AppState.customThemes);
+            this.rebuildCustomThemeOptions();
+            this.renderThemeList();
+          });
+          actions.appendChild(downBtn);
+        }
+
+        // Delete
+        const delBtn = document.createElement('button');
+        delBtn.className = 'theme-list-btn delete';
+        delBtn.innerHTML = '&#x2715;';
+        delBtn.title = 'Delete';
+        delBtn.addEventListener('click', () => {
+          AppState.customThemes.splice(i, 1);
+          CustomThemeStorage.save(AppState.customThemes);
+          this.removeCustomThemeOption(theme.id);
+          this.renderThemeList();
+        });
+        actions.appendChild(delBtn);
+
+        item.appendChild(swatch);
+        item.appendChild(name);
+        item.appendChild(actions);
+        list.appendChild(item);
+      });
+    }
+  },
+
+  rebuildCustomThemeOptions() {
+    // Remove all existing custom theme options from picker
+    const toRemove = this.styleOptions.filter(o =>
+      o.key !== '__plus__' && !STYLES[o.key]
+    );
+    for (const { key } of toRemove) {
+      this.removeCustomThemeOption(key);
+    }
+    // Re-add in current order
+    for (const theme of AppState.customThemes) {
+      this.addCustomThemeOption(theme, true);
+    }
   },
 
   selectCenteredStyle() {
@@ -1190,6 +1425,7 @@ const UIController = {
     let closestDist = Infinity;
 
     for (const { key, element } of this.styleOptions) {
+      if (key === '__plus__') continue;
       const optCenter = element.offsetLeft + (element.offsetWidth / 2);
       const dist = Math.abs(optCenter - centerX);
       if (dist < closestDist) {
@@ -1202,7 +1438,9 @@ const UIController = {
       document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('selected'));
       closest.element.classList.add('selected');
       AppState.currentStyle = closest.key;
-      const styleName = closest.key === 'custom' ? 'CUSTOM' : STYLES[closest.key].name.toUpperCase();
+      const styleName = STYLES[closest.key]
+        ? STYLES[closest.key].name.toUpperCase()
+        : (AppState.customThemes.find(t => t.id === closest.key)?.name || 'CUSTOM').toUpperCase();
       if (this.styleName) this.styleName.textContent = styleName;
     }
   },
@@ -1285,23 +1523,21 @@ const UIController = {
 
   initZoom() {
     this.zoomLevel = 1;
-    // Wide lens (0.5x) at top, normal (1x) middle, zoom in (3x) at bottom
-    const MIN_ZOOM = 0.5;
+    const MIN_ZOOM = 1;
     const MAX_ZOOM = 3;
     const DEFAULT_ZOOM = 1;
     const video = document.getElementById('camera-feed');
-    const clip = document.querySelector('.camera-clip');
     const track = document.querySelector('.zoom-ruler-track');
     const indicator = document.getElementById('zoom-indicator');
     const label = document.getElementById('zoom-label');
     const ticksContainer = document.getElementById('zoom-ticks');
 
-    // Build ruler ticks: 0.5x to 3.0x
-    const steps = [5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
+    // Build ruler ticks: 1.0x to 3.0x
+    const steps = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
     for (let i = 0; i < steps.length; i++) {
       const z = steps[i];
       const tick = document.createElement('div');
-      const isMajor = z === 5 || z === 10 || z === 20 || z === 30;
+      const isMajor = z === 10 || z === 20 || z === 30;
       tick.className = `zoom-tick ${isMajor ? 'major' : 'minor'}`;
       ticksContainer.appendChild(tick);
     }
@@ -1309,28 +1545,13 @@ const UIController = {
     const applyZoom = (val) => {
       this.zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, parseFloat(val)));
       const isMirrored = CameraManager._isMirrored;
-
-      // Viewfinder: at zoom < 1x, keep video at 1x and use CSS wide-angle effect
-      // At zoom >= 1x, scale up the video for digital zoom
-      const visualZoom = Math.max(1, this.zoomLevel);
-      const scaleX = isMirrored ? -visualZoom : visualZoom;
-      video.style.transform = `scaleX(${scaleX}) scaleY(${visualZoom})`;
-
-      // Toggle wide-angle vignette class
-      if (this.zoomLevel < 1) {
-        clip.classList.add('wide-angle');
-      } else {
-        clip.classList.remove('wide-angle');
-      }
-
+      const scaleX = isMirrored ? -this.zoomLevel : this.zoomLevel;
+      video.style.transform = `scaleX(${scaleX}) scaleY(${this.zoomLevel})`;
       label.textContent = this.zoomLevel.toFixed(1) + 'x';
-      // Position indicator: top=0.5x, bottom=3x
       const frac = (this.zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
       const trackH = track.offsetHeight;
       indicator.style.top = (8 + frac * (trackH - 16)) + 'px';
     };
-
-    // Expose applyZoom so it can be called after camera init to fix mirror
     this._applyZoom = applyZoom;
 
     // Drag on track to set zoom

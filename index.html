@@ -8,10 +8,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="An immersive Polaroid camera simulator. Point, shoot, and experience instant photography with authentic sounds and real-time photo development.">
 
-  <!-- Open Graph / Link Preview -->
+  <!-- Open Graph / Link Preview — PNG for universal support (iMessage, Discord, LinkedIn, X, Instagram) -->
   <meta property="og:title" content="Polaroid Camera">
   <meta property="og:description" content="An immersive Polaroid camera simulator with authentic sounds, film styles, and instant photo development.">
-  <meta property="og:image" content="https://imjustinliao.github.io/polaroid-camera/og-image.svg">
+  <meta property="og:image" content="https://imjustinliao.github.io/polaroid-camera/thumbnail.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://imjustinliao.github.io/polaroid-camera/">
 
@@ -19,7 +22,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Polaroid Camera">
   <meta name="twitter:description" content="An immersive Polaroid camera simulator with authentic sounds and instant development.">
-  <meta name="twitter:image" content="https://imjustinliao.github.io/polaroid-camera/og-image.svg">
+  <meta name="twitter:image" content="https://imjustinliao.github.io/polaroid-camera/thumbnail.png">
 
   <title>Polaroid Camera</title>
 
@@ -137,7 +140,29 @@
     </div>
   </div>
 
-  <input type="file" id="custom-bg-input" accept="image/*" style="display:none">
+  <!-- Theme Manager Popup -->
+  <div id="theme-manager" class="theme-manager hidden">
+    <div class="theme-manager-dialog">
+      <div class="theme-manager-header">
+        <h3>Customize</h3>
+        <button id="close-theme-mgr" aria-label="Close">&times;</button>
+      </div>
+      <div class="theme-manager-add">
+        <button id="add-color-theme" class="theme-mgr-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+          <span>Pick Color</span>
+        </button>
+        <button id="add-image-theme" class="theme-mgr-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>Upload Image</span>
+        </button>
+      </div>
+      <div class="theme-manager-list" id="theme-list"></div>
+    </div>
+  </div>
+
+  <input type="file" id="custom-image-input" accept="image/*" style="display:none">
+  <input type="color" id="custom-color-input" style="display:none" value="#e8d4b8">
   <script src="app.js"></script>
 </body>
 </html>
