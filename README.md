@@ -7,16 +7,21 @@ An immersive, full-screen Polaroid camera simulator. Point and shoot — experie
 ### Experience
 - **Immersive Fullscreen** — You ARE looking through the camera lens, not at a widget
 - **Power-on Ritual** — Iris opening animation with warm electrical startup sounds
-- **Real Viewfinder** — Live camera feed with vignette, animated grain overlay, CRT scanlines, aperture guides
+- **Real Viewfinder** — Live camera feed with vignette, animated grain overlay, CRT scanlines, polaroid reticle
 - **Mechanical Capture** — 3-stage shutter click + full-screen flash + polaroid eject animation
 - **Development Magic** — Photos appear dark and slowly reveal as they develop (2.8s)
-- **Gallery** — Photos scatter with subtle rotations, clearly visible, downloadable
+- **12 Film Styles** — Roulette-style scroll picker with unique paper textures per style
+- **Zoom Control** — Ruler-style zoom meter (1x-3x) with keyboard +/- support
+- **10-Shot Limit** — Enforced with shake animation and denied sound; delete to free slots
+- **Gallery** — Stacked photo preview, expand/download on hover, export all
+- **Front/Back Camera** — Switch between cameras on mobile; mirrored front-facing view
+- **Camera Reconnect** — Auto-prompts when camera disconnects (device sleep, tab switch)
 
 ### Technical
 - **No Dependencies** — Pure HTML, CSS, JavaScript
 - **Separate Files** — `index.html`, `style.css`, `app.js` for clean architecture
 - **Responsive Design** — Desktop and mobile optimized with safe-area insets
-- **Fixed Camera Bug** — Even-numbered photos no longer black out (grain uses write-only canvas technique)
+- **Mirrored Front Camera** — Video mirrors for natural selfie view; captures match
 - **Web Audio Synthesis** — All sound effects synthesized in real-time (no audio files)
 
 ## Quick Start
@@ -130,10 +135,13 @@ Semantic versioning: v0.0 → v0.1 → v0.2 → v1.0 → v1.1, etc.
 Commit messages follow convention: `v#.# - Capital first word, 1-10 words`
 
 ### Recent Versions
-- **v0.4** — Simplified camera init flow with improved logging
-- **v0.3** — Camera initialization fixes and permission handling
+- **v2.1** — Mirror fix, camera reconnect, mobile responsive, credits
+- **v2.0** — Frame margins, shutter blocking during print, favicon, OG meta
+- **v1.9** — Camera frame container, viewfinder reticle, film sprocket sides
+- **v1.8** — Ruler zoom meter, 10-photo limit, delete photos, export all
+- **v1.3** — Roulette-style theme picker with scroll auto-select
+- **v1.0** — Photo-only canvas, stacked thumbnails, film roulette
 - **v0.2** — Complete immersive redesign with grain bug fix
-- **v0.1** — Added README
 - **v0.0** — Initial polaroid camera web app
 
 ## Troubleshooting
@@ -160,6 +168,7 @@ Open source. Feel free to use, modify, and share.
 
 ---
 
-**Made by:** Justin Liao
+**Made by:** [Justin Liao](https://justinliao.me) &middot; [@imjustinliao](https://x.com/imjustinliao)
 **Inspired by:** Fujifilm Instax design philosophy and the magic of instant photography
-**View live:** [GitHub Repo](https://github.com/imjustinliao/polaroid-camera)
+**Live demo:** [imjustinliao.github.io/polaroid-camera](https://imjustinliao.github.io/polaroid-camera/)
+**Source:** [GitHub](https://github.com/imjustinliao/polaroid-camera)
