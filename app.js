@@ -145,6 +145,58 @@ const STYLES = {
 const PHOTO_SIZE = 800;
 
 // ══════════════════════════════════════════════════════════════════════════════
+// PHOTO STORAGE — persist photos in localStorage as data URLs
+// ══════════════════════════════════════════════════════════════════════════════
+
+const PhotoStorage = {
+  KEY: 'polaroid-photos',
+
+  save(photos) {
+    try {
+      const data = photos.map(p => ({
+        dataUrl: p.canvas.toDataURL('image/png'),
+        styleKey: p.styleKey,
+        timestamp: p.timestamp || Date.now(),
+      }));
+      localStorage.setItem(this.KEY, JSON.stringify(data));
+    } catch (e) {
+      console.warn('Could not save photos to localStorage:', e);
+    }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (!raw) return [];
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn('Could not load photos from localStorage:', e);
+      return [];
+    }
+  },
+
+  dataUrlToCanvas(dataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas);
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+  },
+
+  clear() {
+    localStorage.removeItem(this.KEY);
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
 // APP STATE
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -891,6 +943,9 @@ const UIController = {
     this.initThemePickerDrag();
     this.initZoom();
 
+    // Load saved photos from localStorage
+    this.loadSavedPhotos();
+
     // Start power-on sequence
     this.startPowerOn();
   },
@@ -1121,6 +1176,22 @@ const UIController = {
     applyZoom(1);
   },
 
+  async loadSavedPhotos() {
+    const saved = PhotoStorage.load();
+    if (saved.length === 0) return;
+
+    console.log(`Loading ${saved.length} saved photos from localStorage`);
+    for (const item of saved) {
+      const canvas = await PhotoStorage.dataUrlToCanvas(item.dataUrl);
+      if (canvas) {
+        this.addPhotoToGallery(canvas, item.styleKey || 'classic', true);
+      }
+    }
+    // Update photo count
+    AppState.photoCount = Math.max(0, 10 - AppState.photos.length);
+    this.filmCounter.textContent = AppState.photoCount;
+  },
+
   startPowerOn() {
     console.log('Starting power-on sequence');
     SoundEngine.trigger('poweron');
@@ -1265,23 +1336,25 @@ const UIController = {
   },
 
   addToGallery(_element, canvas) {
-    // Build a fresh gallery card with a COPY of the canvas (cloned canvas is blank)
-    const galleryCard = PolaroidRenderer.buildPolaroidElement(canvas, AppState.currentStyle, true);
+    this.addPhotoToGallery(canvas, AppState.currentStyle);
+    PhotoStorage.save(AppState.photos);
+  },
+
+  addPhotoToGallery(canvas, styleKey, skipAnimation) {
+    const galleryCard = PolaroidRenderer.buildPolaroidElement(canvas, styleKey, true);
     galleryCard.classList.add('gallery-photo');
-    // Remove the develop overlay in gallery (photo is already developed)
     const devOverlay = galleryCard.querySelector('.develop-overlay');
     if (devOverlay) devOverlay.remove();
 
-    // Random scatter rotation
     const rotation = (Math.random() - 0.5) * 7;
     galleryCard.style.setProperty('--scatter-rotate', rotation + 'deg');
-    galleryCard.style.animationDelay = `${AppState.photos.length * 0.08}s`;
+    if (!skipAnimation) {
+      galleryCard.style.animationDelay = `${AppState.photos.length * 0.08}s`;
+    }
 
-    // Store photo data
-    AppState.photos.push({ element: galleryCard, canvas, styleKey: AppState.currentStyle });
+    AppState.photos.push({ element: galleryCard, canvas, styleKey, timestamp: Date.now() });
 
     this.galleryGrid.appendChild(galleryCard);
-    // Count shown in film counter (top-left)
     this.updatePhotoStack();
   },
 
@@ -1337,6 +1410,9 @@ const UIController = {
     if (AppState.photos.length === 0) {
       this.photoStack.classList.remove('has-photos');
     }
+
+    // Persist
+    PhotoStorage.save(AppState.photos);
   },
 
   rebuildPhotoStack() {
