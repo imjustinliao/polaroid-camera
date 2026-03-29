@@ -750,29 +750,52 @@ const PolaroidRenderer = {
     return canvas;
   },
 
-  downloadCanvas(canvas, styleKey, timestamp) {
-    // Render the full polaroid frame for export
-    const exportCanvas = this.renderExport(canvas, styleKey, timestamp);
-    try {
+  // Convert a rendered export canvas to a File object
+  canvasToFile(exportCanvas, styleKey) {
+    return new Promise((resolve) => {
       exportCanvas.toBlob((blob) => {
-        if (!blob) {
-          alert('Unable to save image. Your browser may restrict this for privacy reasons.');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const fileTimestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-        a.href = url;
-        a.download = `polaroid-${styleKey}-${fileTimestamp}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        if (!blob) { resolve(null); return; }
+        const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        const file = new File([blob], `polaroid-${styleKey}-${ts}.png`, { type: 'image/png' });
+        resolve(file);
       }, 'image/png');
-    } catch (err) {
-      console.error('Download error:', err);
-      alert('Unable to save image. Your browser may restrict this for privacy reasons.');
+    });
+  },
+
+  // Share via native share sheet (saves to camera roll on iOS/Android)
+  async shareFiles(files) {
+    if (navigator.canShare && navigator.canShare({ files })) {
+      try {
+        await navigator.share({ files });
+        return true;
+      } catch (e) {
+        if (e.name === 'AbortError') return true; // user cancelled, not an error
+      }
     }
+    return false;
+  },
+
+  async downloadCanvas(canvas, styleKey, timestamp) {
+    const exportCanvas = this.renderExport(canvas, styleKey, timestamp);
+    const file = await this.canvasToFile(exportCanvas, styleKey);
+    if (!file) {
+      alert('Unable to save image.');
+      return;
+    }
+
+    // Try native share (saves to camera roll on mobile)
+    const shared = await this.shareFiles([file]);
+    if (shared) return;
+
+    // Fallback: browser download
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
 };
 
@@ -1557,6 +1580,7 @@ const UIController = {
     this.photoStack.addEventListener('click', () => this.openGallery());
     document.getElementById('close-gallery-btn').addEventListener('click', () => this.closeGallery());
     document.getElementById('export-all-btn').addEventListener('click', () => this.exportAll());
+    document.getElementById('clear-all-btn').addEventListener('click', () => this.clearAll());
     this.allowCameraBtn.addEventListener('click', () => this.requestCameraPermission());
   },
 
@@ -1883,6 +1907,21 @@ const UIController = {
     PhotoStorage.save(AppState.photos);
   },
 
+  clearAll() {
+    if (AppState.photos.length === 0) return;
+    if (!confirm('Clear all photos from your roll?')) return;
+
+    // Remove all gallery cards
+    this.galleryGrid.innerHTML = '';
+    AppState.photos = [];
+    AppState.photoCount = 10;
+    this.filmCounter.textContent = '10';
+    this.filmCounter.classList.remove('limit-reached');
+    this.photoStack.classList.remove('has-photos');
+    this.rebuildPhotoStack();
+    PhotoStorage.clear();
+  },
+
   rebuildPhotoStack() {
     // Remove existing thumbs
     this.photoStack.querySelectorAll('.stack-thumb').forEach(t => t.remove());
@@ -1906,15 +1945,36 @@ const UIController = {
     }
   },
 
-  exportAll() {
+  async exportAll() {
     if (AppState.photos.length === 0) return;
 
-    // Download each photo individually with a slight delay
-    AppState.photos.forEach((photo, i) => {
+    // Render all photos to files
+    const files = [];
+    for (const photo of AppState.photos) {
+      const exportCanvas = PolaroidRenderer.renderExport(photo.canvas, photo.styleKey || 'polaroid', photo.timestamp);
+      const file = await PolaroidRenderer.canvasToFile(exportCanvas, photo.styleKey || 'polaroid');
+      if (file) files.push(file);
+    }
+
+    if (files.length === 0) return;
+
+    // Try native share (all at once — saves to camera roll on mobile)
+    const shared = await PolaroidRenderer.shareFiles(files);
+    if (shared) return;
+
+    // Fallback: sequential browser downloads
+    for (let i = 0; i < files.length; i++) {
       setTimeout(() => {
-        PolaroidRenderer.downloadCanvas(photo.canvas, photo.styleKey || 'polaroid', photo.timestamp);
+        const url = URL.createObjectURL(files[i]);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = files[i].name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }, i * 300);
-    });
+    }
   },
 
   showLightbox(canvas, styleKey, timestamp) {
