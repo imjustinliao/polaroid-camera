@@ -1276,6 +1276,13 @@ const UIController = {
 
     document.getElementById('color-picker-add-btn').onclick = () => {
       const color = colorInput.value;
+      // Duplicate check — same color already exists
+      const dup = AppState.customThemes.find(t => t.type === 'color' && t.color.toLowerCase() === color.toLowerCase());
+      if (dup) {
+        hexLabel.textContent = 'Already added!';
+        setTimeout(() => { hexLabel.textContent = color.toUpperCase(); }, 1200);
+        return;
+      }
       const theme = {
         id: 'ct-' + Date.now(),
         type: 'color',
@@ -1314,10 +1321,21 @@ const UIController = {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
+          const dataUrl = ev.target.result;
+          // Duplicate check — same file name + size, or same dataUrl prefix
+          const sigLen = 200; // compare first 200 chars of data URL as signature
+          const sig = dataUrl.slice(0, sigLen);
+          const dupImg = AppState.customThemes.find(t =>
+            t.type === 'image' && (t.dataUrl?.slice(0, sigLen) === sig || t.name === file.name.replace(/\.[^.]+$/, '').slice(0, 16))
+          );
+          if (dupImg) {
+            alert('This image is already added as a theme.');
+            return;
+          }
           const theme = {
             id: 'ct-' + Date.now(),
             type: 'image',
-            dataUrl: ev.target.result,
+            dataUrl: dataUrl,
             name: file.name.replace(/\.[^.]+$/, '').slice(0, 16),
           };
           AppState.customThemes.push(theme);
