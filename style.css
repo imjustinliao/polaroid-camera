@@ -279,10 +279,10 @@ button:disabled {
 .vf-frame-guides::before {
   content: '';
   position: absolute;
-  top: 2.5%;
-  bottom: 2.5%;
-  left: 4%;
-  right: 4%;
+  top: 3%;
+  bottom: 3%;
+  left: 5%;
+  right: 5%;
   border: 1px solid rgba(240, 225, 200, 0.12);
   border-radius: 6px;
 }
@@ -344,7 +344,7 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 3.5% 5%;
+  padding: 4.5% 7%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -360,7 +360,7 @@ button:disabled {
 }
 
 .film-counter {
-  font-size: 14px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -371,7 +371,7 @@ button:disabled {
   left: 50%;
   transform: translateX(-50%);
   opacity: 0.6;
-  font-size: 18px;
+  font-size: 15px;
   letter-spacing: 0.35em;
 }
 
@@ -386,7 +386,7 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: 3% 5% max(3.5%, env(safe-area-inset-bottom));
+  padding: 4% 7% max(4.5%, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -399,8 +399,8 @@ button:disabled {
 
 .photo-stack {
   position: absolute;
-  bottom: 3.5%;
-  right: 5%;
+  bottom: 5%;
+  right: 7%;
   width: 64px;
   height: 72px;
   z-index: 31;
@@ -595,32 +595,36 @@ button:disabled {
 
 .toggle-camera-btn {
   position: absolute;
-  top: 3.5%;
-  right: 5%;
-  width: 44px;
-  height: 44px;
+  top: 4.5%;
+  right: 7%;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  opacity: 0.6;
+  opacity: 0.55;
   transition: opacity 150ms ease-out;
   z-index: 31;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
   border-radius: 50%;
+  padding: 7px;
+  color: var(--color-hud-text);
+}
+
+.toggle-camera-btn svg {
+  width: 100%;
+  height: 100%;
 }
 
 .toggle-camera-btn:hover {
   opacity: 0.9;
 }
 
-/* Toggle always visible — harmless on single-camera devices */
-
 /* ─── Zoom Ruler ─── */
 
 .zoom-ruler {
   position: absolute;
-  right: 5%;
+  right: 7%;
   top: 50%;
   transform: translateY(-50%);
   z-index: 31;
@@ -945,31 +949,31 @@ button:disabled {
   width: 80px;
 }
 
-/* Camera page social links — bottom left of frame */
-.cam-social {
+/* Social links — positioned in the dark side bar area, outside camera frame */
+.scene-social {
   position: absolute;
-  bottom: 3.5%;
-  left: 5%;
-  z-index: 31;
+  bottom: 20px;
+  left: 20px;
+  z-index: 5;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.cam-social a {
+.scene-social a {
   display: flex;
   align-items: center;
-  color: rgba(240, 225, 200, 0.35);
+  color: rgba(240, 225, 200, 0.25);
   transition: color 150ms ease-out;
 }
 
-.cam-social a:hover {
-  color: var(--color-cream);
+.scene-social a:hover {
+  color: rgba(240, 225, 200, 0.6);
 }
 
-.cam-social svg {
-  width: 18px;
-  height: 18px;
+.scene-social svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Shutter shake animation when limit reached */
@@ -1258,13 +1262,12 @@ button:disabled {
 /* RESPONSIVE: Mobile & Tablet */
 /* ────────────────────────────────────────────────────────────────────────────── */
 
-/* ─── Phone: portrait orientation ─── */
+/* ─── Phone / tablet ─── */
 @media (max-width: 768px) {
-  /* Phone: frame width-based, height follows to avoid vertical cut-off */
   .camera-frame {
-    width: calc(100vw - 20px);
-    height: calc(100vw - 20px);
-    max-height: calc(100vh - 20px);
+    width: calc(100vw - 16px);
+    height: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
     border-radius: 8px;
   }
 
@@ -1272,64 +1275,9 @@ button:disabled {
     border-radius: 8px;
   }
 
-  .film-counter {
-    font-size: 16px;
-  }
-
+  /* Smaller POLAROID text on phone */
   .brand {
-    font-size: 20px;
-  }
-
-  .shutter-button {
-    width: 68px;
-    height: 68px;
-  }
-
-  .style-option {
-    width: 32px;
-    height: 32px;
-  }
-
-  .theme-picker-wrapper {
-    width: 160px;
-    height: 48px;
-  }
-
-  .polaroid-card {
-    width: 220px;
-  }
-
-  .photo-stack {
-    width: 60px;
-    height: 68px;
-  }
-
-  .stack-thumb {
-    width: 52px;
-    height: 60px;
-  }
-
-  .zoom-ruler {
-    right: 10px;
-  }
-
-  .zoom-ruler-track {
-    height: 120px;
-    width: 28px;
-  }
-
-  .zoom-level-label {
-    font-size: 12px;
-  }
-
-  .vf-frame-guides::after {
-    width: 52px;
-    height: 72px;
-  }
-
-  .vf-viewfinder-inner {
-    width: 20px;
-    height: 28px;
+    font-size: 13px;
   }
 
   .gallery-grid {
@@ -1337,24 +1285,11 @@ button:disabled {
     gap: 16px;
   }
 
-  .hud-bottom {
-    gap: 18px;
-  }
-}
-
-/* ─── Small phones ─── */
-@media (max-width: 400px) {
-  .boot-text {
-    font-size: 32px;
-  }
-
-  .shutter-button {
-    width: 62px;
-    height: 62px;
-  }
-
-  .theme-picker-wrapper {
-    width: 140px;
+  /* Social links go below the frame on phone */
+  .scene-social {
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .permission-dialog {
