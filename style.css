@@ -1268,10 +1268,11 @@ button:disabled {
 
 /* ─── Phone / tablet ─── */
 @media (max-width: 768px) {
+  /* Frame: full width, shorter height so controls don't overlap camera view.
+     The camera view is the top portion, controls sit in a bottom strip. */
   .camera-frame {
-    width: calc(100vw - 16px);
-    height: calc(100vw - 16px);
-    max-height: calc(100vh - 100px);
+    width: calc(100vw - 12px);
+    height: calc(100vh - 80px);
     border-radius: 8px;
   }
 
@@ -1280,12 +1281,63 @@ button:disabled {
   }
 
   .brand {
-    font-size: 12px;
-    letter-spacing: 0.25em;
+    font-size: 11px;
+    letter-spacing: 0.2em;
   }
 
   .film-counter {
-    font-size: 16px;
+    font-size: 14px;
+  }
+
+  /* Tighter padding so HUD doesn't eat into the view */
+  .hud-top {
+    padding: 3% 5%;
+  }
+
+  .hud-bottom {
+    padding: 2% 5% 3%;
+    gap: 12px;
+  }
+
+  .shutter-button {
+    width: 60px;
+    height: 60px;
+  }
+
+  .style-option {
+    width: 28px;
+    height: 28px;
+  }
+
+  .theme-picker-wrapper {
+    width: 130px;
+    height: 42px;
+  }
+
+  .photo-stack {
+    width: 50px;
+    height: 56px;
+  }
+
+  .stack-thumb {
+    width: 44px;
+    height: 50px;
+  }
+
+  /* Hide zoom ruler on very small screens — use keyboard +/- instead */
+  .zoom-ruler {
+    display: none;
+  }
+
+  /* Viewfinder reticle smaller */
+  .vf-frame-guides::after {
+    width: 32px;
+    height: 44px;
+  }
+
+  .vf-viewfinder-inner {
+    width: 12px;
+    height: 18px;
   }
 
   /* Show the switch camera button on mobile */
@@ -1293,23 +1345,13 @@ button:disabled {
     display: block;
   }
 
-  .zoom-ruler-track {
-    height: 90px;
-    width: 22px;
-  }
-
-  .zoom-level-label {
-    font-size: 10px;
-  }
-
   .gallery-grid {
     padding: 16px;
     gap: 16px;
   }
 
-  /* Credits below the frame + toggle button */
   .scene-credits {
-    bottom: 8px;
+    bottom: 6px;
     font-size: 10px;
   }
 
