@@ -799,43 +799,95 @@ const UIController = {
 
   initStylePicker() {
     const picker = document.getElementById('style-picker');
-    let firstOption = null;
+    this.styleOptions = [];
+
     for (const [key, style] of Object.entries(STYLES)) {
       const option = document.createElement('div');
       option.className = 'style-option';
-      if (key === 'classic') {
-        option.classList.add('selected');
-        firstOption = option;
-      }
+      option.dataset.styleKey = key;
       option.style.backgroundColor = style.borderColor;
       option.title = style.name;
-      option.addEventListener('click', () => this.selectStyle(key, option));
-      picker.appendChild(option);
-    }
-    // Center the initially selected option after DOM renders
-    if (firstOption) {
-      requestAnimationFrame(() => {
+      // Clicking scrolls to center (which then auto-selects)
+      option.addEventListener('click', () => {
         const wrapperWidth = picker.parentElement.offsetWidth;
-        picker.scrollLeft = firstOption.offsetLeft - (wrapperWidth / 2) + (firstOption.offsetWidth / 2);
+        picker.scrollTo({
+          left: option.offsetLeft - (wrapperWidth / 2) + (option.offsetWidth / 2),
+          behavior: 'smooth',
+        });
       });
+      picker.appendChild(option);
+      this.styleOptions.push({ key, element: option });
+    }
+
+    // Scroll listener — whichever option is closest to center gets selected
+    let scrollTimeout;
+    picker.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => this.selectCenteredStyle(), 60);
+      // Real-time visual feedback during scroll
+      this.updatePickerVisuals();
+    });
+
+    // Center first option on load
+    requestAnimationFrame(() => {
+      const wrapperWidth = picker.parentElement.offsetWidth;
+      const first = this.styleOptions[0].element;
+      picker.scrollLeft = first.offsetLeft - (wrapperWidth / 2) + (first.offsetWidth / 2);
+      this.selectCenteredStyle();
+    });
+  },
+
+  selectCenteredStyle() {
+    const picker = document.getElementById('style-picker');
+    const wrapperWidth = picker.parentElement.offsetWidth;
+    const centerX = picker.scrollLeft + (wrapperWidth / 2);
+
+    let closest = null;
+    let closestDist = Infinity;
+
+    for (const { key, element } of this.styleOptions) {
+      const optCenter = element.offsetLeft + (element.offsetWidth / 2);
+      const dist = Math.abs(optCenter - centerX);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = { key, element };
+      }
+    }
+
+    if (closest && AppState.currentStyle !== closest.key) {
+      document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('selected'));
+      closest.element.classList.add('selected');
+      AppState.currentStyle = closest.key;
+      this.styleName.textContent = STYLES[closest.key].name.toUpperCase();
     }
   },
 
-  selectStyle(key, element) {
-    document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('selected'));
-    element.classList.add('selected');
-    AppState.currentStyle = key;
-    this.styleName.textContent = STYLES[key].name.toUpperCase();
+  updatePickerVisuals() {
+    // Scale/opacity based on distance from center for roulette feel
+    const picker = document.getElementById('style-picker');
+    const wrapperWidth = picker.parentElement.offsetWidth;
+    const centerX = picker.scrollLeft + (wrapperWidth / 2);
 
-    // Scroll selected option to center of the picker
-    const strip = document.getElementById('style-picker');
-    const wrapperWidth = strip.parentElement.offsetWidth;
-    const elLeft = element.offsetLeft;
-    const elWidth = element.offsetWidth;
-    strip.scrollTo({
-      left: elLeft - (wrapperWidth / 2) + (elWidth / 2),
-      behavior: 'smooth',
-    });
+    for (const { element } of this.styleOptions) {
+      const optCenter = element.offsetLeft + (element.offsetWidth / 2);
+      const dist = Math.abs(optCenter - centerX);
+      const maxDist = wrapperWidth / 2;
+      const t = Math.min(dist / maxDist, 1); // 0 = center, 1 = edge
+
+      const scale = 1.1 - (t * 0.35); // 1.1 at center, 0.75 at edge
+      const opacity = 1 - (t * 0.55); // 1.0 at center, 0.45 at edge
+
+      element.style.transform = `scale(${scale})`;
+      element.style.opacity = opacity;
+
+      if (t < 0.15) {
+        element.classList.add('selected');
+        element.style.borderColor = '#fff';
+      } else {
+        element.classList.remove('selected');
+        element.style.borderColor = 'transparent';
+      }
+    }
   },
 
   bindShutterButton() {
@@ -871,6 +923,7 @@ const UIController = {
   },
 
   initThemePickerDrag() {
+    // Mouse drag support for desktop (touch uses native scroll)
     const strip = document.getElementById('style-picker');
     let isDown = false;
     let startX;
@@ -878,11 +931,12 @@ const UIController = {
 
     strip.addEventListener('mousedown', (e) => {
       isDown = true;
+      strip.style.scrollBehavior = 'auto';
       startX = e.pageX - strip.offsetLeft;
       scrollLeft = strip.scrollLeft;
     });
-    strip.addEventListener('mouseleave', () => { isDown = false; });
-    strip.addEventListener('mouseup', () => { isDown = false; });
+    strip.addEventListener('mouseleave', () => { isDown = false; strip.style.scrollBehavior = ''; });
+    strip.addEventListener('mouseup', () => { isDown = false; strip.style.scrollBehavior = ''; });
     strip.addEventListener('mousemove', (e) => {
       if (!isDown) return;
       e.preventDefault();
