@@ -1532,17 +1532,20 @@ button:disabled {
   height: 24px;
 }
 
-/* Inline color picker inside the popup */
-.color-picker-inline {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+/* Inline color picker section inside the popup */
+.color-picker-section {
   border-bottom: 1px solid rgba(240, 225, 200, 0.08);
   animation: dialog-slide 200ms ease-out;
 }
 
-.color-picker-inline input[type="color"] {
+.color-picker-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+}
+
+.color-picker-section input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
   width: 48px;
@@ -1555,13 +1558,72 @@ button:disabled {
   flex-shrink: 0;
 }
 
-.color-picker-inline input[type="color"]::-webkit-color-swatch-wrapper {
+.color-picker-section input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 2px;
 }
 
-.color-picker-inline input[type="color"]::-webkit-color-swatch {
+.color-picker-section input[type="color"]::-webkit-color-swatch {
   border: none;
   border-radius: 5px;
+}
+
+/* Texture picker row */
+.texture-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px 12px;
+}
+
+.texture-picker-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(240, 225, 200, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.texture-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.texture-opt {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(240, 225, 200, 0.12);
+  cursor: pointer;
+  transition: all 120ms ease-out;
+  position: relative;
+  background-size: 60px 60px;
+}
+
+.texture-opt:hover {
+  border-color: rgba(240, 225, 200, 0.35);
+}
+
+.texture-opt.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.texture-opt-label {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: rgba(240, 225, 200, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.texture-opt.selected .texture-opt-label {
+  color: rgba(240, 225, 200, 0.7);
 }
 
 .color-picker-preview {

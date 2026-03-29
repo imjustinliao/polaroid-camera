@@ -171,14 +171,20 @@
         </button>
       </div>
       <!-- Inline color picker — hidden by default, toggled by Pick Color button -->
-      <div id="color-picker-row" class="color-picker-inline" style="display:none">
-        <input type="color" id="inline-color-input" value="#e8d4b8">
-        <div class="color-picker-preview">
-          <span id="color-picker-hex" class="color-picker-hex">#E8D4B8</span>
-          <span class="color-picker-hint">Tap swatch to change</span>
+      <div id="color-picker-row" class="color-picker-section" style="display:none">
+        <div class="color-picker-top">
+          <input type="color" id="inline-color-input" value="#e8d4b8">
+          <div class="color-picker-preview">
+            <span id="color-picker-hex" class="color-picker-hex">#E8D4B8</span>
+            <span class="color-picker-hint">Tap swatch to change</span>
+          </div>
+          <button id="color-picker-add-btn" class="color-picker-add">Add</button>
+          <button id="color-picker-cancel-btn" class="color-picker-cancel">Cancel</button>
         </div>
-        <button id="color-picker-add-btn" class="color-picker-add">Add</button>
-        <button id="color-picker-cancel-btn" class="color-picker-cancel">Cancel</button>
+        <div class="texture-picker">
+          <span class="texture-picker-label">Texture</span>
+          <div id="texture-options" class="texture-options"></div>
+        </div>
       </div>
       <div class="theme-manager-list" id="theme-list"></div>
     </div>

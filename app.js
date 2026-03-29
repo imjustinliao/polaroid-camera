@@ -141,6 +141,18 @@ const STYLES = {
   },
 };
 
+// Available paper textures for custom color themes
+const PAPER_TEXTURES = {
+  none:       { name: 'None',       type: 'fractalNoise', baseFreq: '.65', octaves: 4, opacity: 0 },
+  smooth:     { name: 'Smooth',     type: 'fractalNoise', baseFreq: '.65', octaves: 4, opacity: 0.06 },
+  linen:      { name: 'Linen',      type: 'turbulence',   baseFreq: '.03 .5', octaves: 2, opacity: 0.1 },
+  canvas:     { name: 'Canvas',     type: 'turbulence',   baseFreq: '.25 .25', octaves: 2, opacity: 0.09 },
+  watercolor: { name: 'Watercolor', type: 'fractalNoise', baseFreq: '.15', octaves: 2, opacity: 0.12 },
+  rough:      { name: 'Rough',      type: 'turbulence',   baseFreq: '.2', octaves: 6, opacity: 0.14 },
+  fiber:      { name: 'Fiber',      type: 'fractalNoise', baseFreq: '.5 .03', octaves: 3, opacity: 0.08 },
+  grain:      { name: 'Grain',      type: 'turbulence',   baseFreq: '.18', octaves: 5, opacity: 0.15 },
+};
+
 // Canvas output = photo only (square). The HTML card provides the polaroid frame.
 const PHOTO_SIZE = 800;
 
@@ -208,6 +220,7 @@ const CustomThemeStorage = {
         id: t.id,
         type: t.type,
         color: t.color || null,
+        texture: t.texture || null,
         dataUrl: t.dataUrl || null,
         name: t.name,
       }));
@@ -585,7 +598,15 @@ const PolaroidRenderer = {
     const customTheme = AppState.customThemes.find(t => t.id === styleKey);
     if (customTheme) {
       if (customTheme.type === 'color') {
-        card.style.backgroundColor = customTheme.color;
+        const tex = PAPER_TEXTURES[customTheme.texture || 'none'];
+        if (tex && tex.opacity > 0) {
+          const texType = tex.type || 'fractalNoise';
+          const textureSvg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+          card.style.background = `${textureSvg}, ${customTheme.color}`;
+          card.style.backgroundSize = '120px 120px, 100% 100%';
+        } else {
+          card.style.backgroundColor = customTheme.color;
+        }
       } else if (customTheme.type === 'image' && customTheme.dataUrl) {
         card.style.background = `url(${customTheme.dataUrl}) center/cover`;
       }
@@ -700,8 +721,9 @@ const PolaroidRenderer = {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // Paper texture overlay — varied by texture type
-    const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
+    // Paper texture overlay — use custom theme texture if available, else style default
+    const customTex = customTheme?.type === 'color' && customTheme.texture ? PAPER_TEXTURES[customTheme.texture] : null;
+    const tex = customTex || style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
     const isTurbulence = (tex.type === 'turbulence');
     const grainCount = Math.floor(w * h * (isTurbulence ? 0.003 : 0.002));
     for (let i = 0; i < grainCount; i++) {
@@ -1222,7 +1244,15 @@ const UIController = {
     option.title = theme.name;
 
     if (theme.type === 'color') {
-      option.style.backgroundColor = theme.color;
+      const tex = PAPER_TEXTURES[theme.texture || 'none'];
+      if (tex && tex.opacity > 0) {
+        const texType = tex.type || 'fractalNoise';
+        const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+        option.style.background = `${svgBg}, ${theme.color}`;
+        option.style.backgroundSize = '60px 60px, 100% 100%';
+      } else {
+        option.style.backgroundColor = theme.color;
+      }
     } else if (theme.type === 'image' && theme.dataUrl) {
       option.style.backgroundImage = `url(${theme.dataUrl})`;
     }
@@ -1287,20 +1317,58 @@ const UIController = {
     const colorInput = document.getElementById('inline-color-input');
     const hexLabel = document.getElementById('color-picker-hex');
 
+    let selectedTexture = 'none';
+
+    // Populate texture options
+    const texContainer = document.getElementById('texture-options');
+    const buildTextureOptions = () => {
+      texContainer.innerHTML = '';
+      for (const [key, tex] of Object.entries(PAPER_TEXTURES)) {
+        const opt = document.createElement('div');
+        opt.className = 'texture-opt' + (key === selectedTexture ? ' selected' : '');
+        // Show texture preview using the current color
+        const bgColor = colorInput.value;
+        if (tex.opacity > 0) {
+          const texType = tex.type || 'fractalNoise';
+          const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+          opt.style.background = `${svgBg}, ${bgColor}`;
+          opt.style.backgroundSize = '60px 60px, 100% 100%';
+        } else {
+          opt.style.backgroundColor = bgColor;
+        }
+        const label = document.createElement('span');
+        label.className = 'texture-opt-label';
+        label.textContent = tex.name;
+        opt.appendChild(label);
+        opt.addEventListener('click', () => {
+          selectedTexture = key;
+          texContainer.querySelectorAll('.texture-opt').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+        });
+        texContainer.appendChild(opt);
+      }
+    };
+
     document.getElementById('add-color-theme').onclick = () => {
-      colorRow.style.display = colorRow.style.display === 'none' ? 'flex' : 'none';
-      colorInput.value = '#e8d4b8';
-      hexLabel.textContent = '#E8D4B8';
+      const isVisible = colorRow.style.display !== 'none';
+      colorRow.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        colorInput.value = '#e8d4b8';
+        hexLabel.textContent = '#E8D4B8';
+        selectedTexture = 'none';
+        buildTextureOptions();
+      }
     };
 
     colorInput.addEventListener('input', () => {
       hexLabel.textContent = colorInput.value.toUpperCase();
+      buildTextureOptions(); // refresh swatches with new color
     });
 
     document.getElementById('color-picker-add-btn').onclick = () => {
       const color = colorInput.value;
-      // Duplicate check — same color already exists
-      const dup = AppState.customThemes.find(t => t.type === 'color' && t.color.toLowerCase() === color.toLowerCase());
+      // Duplicate check — same color + texture already exists
+      const dup = AppState.customThemes.find(t => t.type === 'color' && t.color.toLowerCase() === color.toLowerCase() && (t.texture || 'none') === selectedTexture);
       if (dup) {
         hexLabel.textContent = 'Already added!';
         setTimeout(() => { hexLabel.textContent = color.toUpperCase(); }, 1200);
@@ -1310,6 +1378,7 @@ const UIController = {
         id: 'ct-' + Date.now(),
         type: 'color',
         color: color,
+        texture: selectedTexture,
         name: color.toUpperCase(),
       };
       AppState.customThemes.push(theme);
@@ -1333,6 +1402,7 @@ const UIController = {
 
     document.getElementById('color-picker-cancel-btn').onclick = () => {
       colorRow.style.display = 'none';
+      selectedTexture = 'none';
     };
 
     // Bind add image
@@ -1422,7 +1492,15 @@ const UIController = {
         const swatch = document.createElement('div');
         swatch.className = 'theme-list-swatch';
         if (theme.type === 'color') {
-          swatch.style.backgroundColor = theme.color;
+          const tex = PAPER_TEXTURES[theme.texture || 'none'];
+          if (tex && tex.opacity > 0) {
+            const texType = tex.type || 'fractalNoise';
+            const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+            swatch.style.background = `${svgBg}, ${theme.color}`;
+            swatch.style.backgroundSize = '60px 60px, 100% 100%';
+          } else {
+            swatch.style.backgroundColor = theme.color;
+          }
         } else if (theme.dataUrl) {
           swatch.style.backgroundImage = `url(${theme.dataUrl})`;
         }
