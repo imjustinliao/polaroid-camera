@@ -342,10 +342,6 @@ const CameraManager = {
   capture(zoomLevel = 1) {
     const vw = this.videoEl.videoWidth || 1280;
     const vh = this.videoEl.videoHeight || 960;
-    // Crop to the zoomed square center region
-    const side = Math.min(vw, vh) / zoomLevel;
-    const sx = (vw - side) / 2;
-    const sy = (vh - side) / 2;
 
     const canvas = document.createElement('canvas');
     canvas.width = 800;
@@ -358,7 +354,27 @@ const CameraManager = {
       ctx.scale(-1, 1);
     }
 
-    ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
+    if (zoomLevel >= 1) {
+      // Zoom in: crop to center square divided by zoom level
+      const side = Math.min(vw, vh) / zoomLevel;
+      const sx = (vw - side) / 2;
+      const sy = (vh - side) / 2;
+      ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
+    } else {
+      // Wide lens (< 1x): show more of the frame, pad with black if needed
+      const side = Math.min(vw, vh);
+      const visibleSide = side / zoomLevel; // larger than actual
+      const sx = (vw - visibleSide) / 2;
+      const sy = (vh - visibleSide) / 2;
+      // Draw the full video scaled down, centered
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 800, 800);
+      ctx.drawImage(this.videoEl,
+        Math.max(0, sx), Math.max(0, sy),
+        Math.min(vw, visibleSide), Math.min(vh, visibleSide),
+        0, 0, 800, 800);
+    }
+
     return canvas;
   },
 
@@ -592,13 +608,14 @@ const PolaroidRenderer = {
 
   renderExport(photoCanvas, styleKey) {
     // Renders a full polaroid frame canvas for download
-    // Proportions: equal padding top/left/right, thick bottom
+    // Matches CSS card ratio: 5% side/top padding, 18% bottom
     const style = STYLES[styleKey];
-    const pad = 40;        // top, left, right padding
-    const bottomPad = 120; // thick bottom border
     const photoSize = PHOTO_SIZE; // 800
-    const w = photoSize + pad * 2;        // 880
-    const h = photoSize + pad + bottomPad; // 960
+    // photo is 90% of width → width = photoSize / 0.9
+    const w = Math.round(photoSize / 0.9);     // ~889
+    const pad = Math.round(w * 0.05);           // ~44 (5% each side/top)
+    const bottomPad = Math.round(w * 0.18);     // ~160 (18% bottom)
+    const h = pad + photoSize + bottomPad;       // ~1004
 
     const canvas = document.createElement('canvas');
     canvas.width = w;
@@ -639,7 +656,7 @@ const PolaroidRenderer = {
     ctx.font = 'italic 22px Georgia, serif';
     ctx.fillStyle = 'rgba(80, 65, 50, 0.4)';
     ctx.textAlign = 'right';
-    ctx.fillText(dateStr, w - pad - 8, h - 30);
+    ctx.fillText(dateStr, w - pad - 8, h - bottomPad * 0.25);
     ctx.restore();
 
     return canvas;
@@ -1173,38 +1190,34 @@ const UIController = {
 
   initZoom() {
     this.zoomLevel = 1;
-    const MIN_ZOOM = 1;
+    // Wide lens (0.5x) at top, normal (1x) middle, zoom in (3x) at bottom
+    const MIN_ZOOM = 0.5;
     const MAX_ZOOM = 3;
+    const DEFAULT_ZOOM = 1;
     const video = document.getElementById('camera-feed');
     const track = document.querySelector('.zoom-ruler-track');
     const indicator = document.getElementById('zoom-indicator');
     const label = document.getElementById('zoom-label');
     const ticksContainer = document.getElementById('zoom-ticks');
 
-    // Build ruler ticks: 1.0x to 3.0x
-    for (let z = 10; z <= 30; z++) {
+    // Build ruler ticks: 0.5x to 3.0x
+    const steps = [5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
+    for (let i = 0; i < steps.length; i++) {
+      const z = steps[i];
       const tick = document.createElement('div');
-      const isMajor = z % 10 === 0;
-      const isHalf = z % 5 === 0;
+      const isMajor = z === 5 || z === 10 || z === 20 || z === 30;
       tick.className = `zoom-tick ${isMajor ? 'major' : 'minor'}`;
-      if (!isMajor && !isHalf) tick.style.width = '5px';
       ticksContainer.appendChild(tick);
-
-      if (isMajor) {
-        const lbl = document.createElement('span');
-        lbl.className = 'zoom-tick-label';
-        const fraction = (ticksContainer.children.length - 1) / 20;
-        lbl.style.top = `${8 + fraction * (track.offsetHeight - 16)}px`;
-        lbl.textContent = (z / 10).toFixed(0) + 'x';
-        track.appendChild(lbl);
-      }
     }
 
     const applyZoom = (val) => {
       this.zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, parseFloat(val)));
-      video.style.transform = `scale(${this.zoomLevel})`;
+      // For wide lens (<1x), scale down the video; for zoom (>1x), scale up
+      const isMirrored = CameraManager._isMirrored;
+      const scaleX = isMirrored ? -this.zoomLevel : this.zoomLevel;
+      video.style.transform = `scaleX(${scaleX}) scaleY(${this.zoomLevel})`;
       label.textContent = this.zoomLevel.toFixed(1) + 'x';
-      // Position indicator: top=1x, bottom=3x
+      // Position indicator: top=0.5x, bottom=3x
       const frac = (this.zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
       const trackH = track.offsetHeight;
       indicator.style.top = (8 + frac * (trackH - 16)) + 'px';

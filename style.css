@@ -758,7 +758,11 @@ button:disabled {
 /* ─── POLAROID CARD ─── */
 /* Canvas = photo only. The HTML card provides the polaroid frame. */
 
-/* Polaroid card — consistent ratio matching export (880:960 = 11:12) */
+/* Polaroid card — consistent ratio everywhere.
+   Real Polaroid proportions:
+   - Side/top padding: 5% of width
+   - Bottom border: 18% of width (thick, signature look)
+   - Total aspect ratio: 100 : (5 + 90 + 18) = 100:113 */
 .polaroid-card {
   position: relative;
   width: 260px;
@@ -767,12 +771,10 @@ button:disabled {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Photo area — square, padded equally on top/left/right */
 .photo-wrap {
   position: relative;
-  /* Padding ratio: 40/880 = 4.55% each side */
-  width: calc(100% - 9.1%);
-  margin: 4.55% auto 0;
+  width: 90%;
+  margin: 5% auto 0;
   aspect-ratio: 1;
   background: var(--color-warm-dark);
   overflow: hidden;
@@ -785,10 +787,10 @@ button:disabled {
   object-fit: cover;
 }
 
-/* Bottom border — ratio: 120/880 = 13.6% of card width */
+/* Thick bottom border — 18% of card width */
 .polaroid-bottom {
-  height: 13.6%;
-  padding-bottom: 13.6%;
+  height: 0;
+  padding-bottom: 18%;
   position: relative;
 }
 
