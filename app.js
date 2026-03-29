@@ -1259,77 +1259,50 @@ const UIController = {
     document.getElementById('close-theme-mgr').onclick = () => mgr.classList.add('hidden');
     mgr.addEventListener('click', (e) => { if (e.target === mgr) mgr.classList.add('hidden'); });
 
-    // Bind add color — show inline color picker with preview + add button
+    // Bind add color — toggle the inline color picker row (HTML element, not dynamic)
+    const colorRow = document.getElementById('color-picker-row');
+    const colorInput = document.getElementById('inline-color-input');
+    const hexLabel = document.getElementById('color-picker-hex');
+
     document.getElementById('add-color-theme').onclick = () => {
-      // Remove any existing inline picker
-      const existing = mgr.querySelector('.color-picker-inline');
-      if (existing) { existing.remove(); return; }
-
-      const row = document.createElement('div');
-      row.className = 'color-picker-inline';
-
-      const colorInput = document.createElement('input');
-      colorInput.type = 'color';
+      colorRow.style.display = colorRow.style.display === 'none' ? 'flex' : 'none';
       colorInput.value = '#e8d4b8';
+      hexLabel.textContent = '#E8D4B8';
+    };
 
-      const preview = document.createElement('div');
-      preview.className = 'color-picker-preview';
-      const hexLabel = document.createElement('span');
-      hexLabel.className = 'color-picker-hex';
+    colorInput.addEventListener('input', () => {
       hexLabel.textContent = colorInput.value.toUpperCase();
-      const hint = document.createElement('span');
-      hint.className = 'color-picker-hint';
-      hint.textContent = 'Tap swatch to change';
-      preview.appendChild(hexLabel);
-      preview.appendChild(hint);
+    });
 
-      colorInput.addEventListener('input', () => {
-        hexLabel.textContent = colorInput.value.toUpperCase();
-      });
+    document.getElementById('color-picker-add-btn').onclick = () => {
+      const color = colorInput.value;
+      const theme = {
+        id: 'ct-' + Date.now(),
+        type: 'color',
+        color: color,
+        name: color.toUpperCase(),
+      };
+      AppState.customThemes.push(theme);
+      CustomThemeStorage.save(AppState.customThemes);
+      this.addCustomThemeOption(theme, false);
+      this.renderThemeList();
+      colorRow.style.display = 'none';
+      // Scroll to the new theme
+      const picker = document.getElementById('style-picker');
+      const opt = this.styleOptions.find(o => o.key === theme.id);
+      if (opt) {
+        const wrapperWidth = picker.parentElement.offsetWidth;
+        setTimeout(() => {
+          picker.scrollTo({
+            left: opt.element.offsetLeft - (wrapperWidth / 2) + (opt.element.offsetWidth / 2),
+            behavior: 'smooth',
+          });
+        }, 100);
+      }
+    };
 
-      const addBtn = document.createElement('button');
-      addBtn.className = 'color-picker-add';
-      addBtn.textContent = 'Add';
-      addBtn.addEventListener('click', () => {
-        const color = colorInput.value;
-        const theme = {
-          id: 'ct-' + Date.now(),
-          type: 'color',
-          color: color,
-          name: color.toUpperCase(),
-        };
-        AppState.customThemes.push(theme);
-        CustomThemeStorage.save(AppState.customThemes);
-        this.addCustomThemeOption(theme, false);
-        this.renderThemeList();
-        row.remove();
-        // Scroll to the new theme
-        const picker = document.getElementById('style-picker');
-        const opt = this.styleOptions.find(o => o.key === theme.id);
-        if (opt) {
-          const wrapperWidth = picker.parentElement.offsetWidth;
-          setTimeout(() => {
-            picker.scrollTo({
-              left: opt.element.offsetLeft - (wrapperWidth / 2) + (opt.element.offsetWidth / 2),
-              behavior: 'smooth',
-            });
-          }, 100);
-        }
-      });
-
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'color-picker-cancel';
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.addEventListener('click', () => row.remove());
-
-      row.appendChild(colorInput);
-      row.appendChild(preview);
-      row.appendChild(addBtn);
-      row.appendChild(cancelBtn);
-
-      // Insert after the add buttons section
-      const addSection = mgr.querySelector('.theme-manager-add');
-      addSection.after(row);
+    document.getElementById('color-picker-cancel-btn').onclick = () => {
+      colorRow.style.display = 'none';
     };
 
     // Bind add image

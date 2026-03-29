@@ -1611,15 +1611,15 @@ button:disabled {
     border-radius: 8px;
   }
 
-  /* Top/bottom HUD strips — generous padding to clear the frame edge */
+  /* Top/bottom HUD strips — generous inset to clear the frame border */
   .hud-top {
-    padding: 18px 24px;
+    padding: 22px 28px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
     border-radius: 8px 8px 0 0;
   }
 
   .hud-bottom {
-    padding: 18px 24px max(24px, env(safe-area-inset-bottom));
+    padding: 20px 28px max(28px, env(safe-area-inset-bottom));
     gap: 10px;
   }
 
@@ -1660,6 +1660,14 @@ button:disabled {
   /* Hide zoom ruler on very small screens — use keyboard +/- instead */
   .zoom-ruler {
     display: none;
+  }
+
+  /* Push frame guide border inward so HUD elements have clearance */
+  .vf-frame-guides::before {
+    top: 6%;
+    bottom: 8%;
+    left: 7%;
+    right: 7%;
   }
 
   /* Viewfinder reticle smaller */
