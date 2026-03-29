@@ -801,9 +801,10 @@ button:disabled {
   font-family: 'Georgia', serif;
   font-style: italic;
   font-size: 9px;
-  color: rgba(80, 65, 50, 0.45);
+  color: rgba(60, 45, 30, 0.7);
   pointer-events: none;
   white-space: nowrap;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .develop-overlay {
@@ -1417,6 +1418,91 @@ button:disabled {
   height: 24px;
 }
 
+/* Inline color picker inside the popup */
+.color-picker-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(240, 225, 200, 0.08);
+  animation: dialog-slide 200ms ease-out;
+}
+
+.color-picker-inline input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 48px;
+  height: 48px;
+  border: 2px solid rgba(240, 225, 200, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.color-picker-inline input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-picker-inline input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
+
+.color-picker-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.color-picker-hex {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-cream);
+  letter-spacing: 0.05em;
+}
+
+.color-picker-hint {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(240, 225, 200, 0.4);
+}
+
+.color-picker-add {
+  padding: 8px 16px;
+  background: var(--color-shutter-red);
+  color: var(--color-cream);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 150ms;
+  flex-shrink: 0;
+}
+
+.color-picker-add:hover {
+  background: #d65a3d;
+}
+
+.color-picker-cancel {
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(240, 225, 200, 0.5);
+  cursor: pointer;
+  transition: color 150ms;
+  flex-shrink: 0;
+}
+
+.color-picker-cancel:hover {
+  color: var(--color-cream);
+}
+
 .theme-manager-list {
   flex: 1;
   overflow-y: auto;
@@ -1526,15 +1612,15 @@ button:disabled {
     border-radius: 8px;
   }
 
-  /* Top/bottom HUD strips get subtle dark tint so controls are readable */
+  /* Top/bottom HUD strips — generous padding to clear the frame edge */
   .hud-top {
-    padding: 14px 20px;
+    padding: 18px 24px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
     border-radius: 8px 8px 0 0;
   }
 
   .hud-bottom {
-    padding: 16px 20px 20px;
+    padding: 18px 24px max(24px, env(safe-area-inset-bottom));
     gap: 10px;
   }
 
@@ -1657,5 +1743,10 @@ button:disabled {
   .gallery-photo:active .photo-actions {
     opacity: 1;
     background: rgba(0, 0, 0, 0.35);
+  }
+
+  /* Always show theme list action buttons on touch devices */
+  .theme-list-actions {
+    opacity: 1;
   }
 }

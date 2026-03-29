@@ -713,7 +713,7 @@ const PolaroidRenderer = {
     const dateStr = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     ctx.save();
     ctx.font = 'italic 24px Georgia, serif';
-    ctx.fillStyle = 'rgba(80, 65, 50, 0.55)';
+    ctx.fillStyle = 'rgba(60, 45, 30, 0.7)';
     ctx.textAlign = 'right';
     ctx.fillText(dateStr, w - pad - 8, h - bottomPad * 0.28);
     ctx.restore();
@@ -1230,11 +1230,38 @@ const UIController = {
     document.getElementById('close-theme-mgr').onclick = () => mgr.classList.add('hidden');
     mgr.addEventListener('click', (e) => { if (e.target === mgr) mgr.classList.add('hidden'); });
 
-    // Bind add color
+    // Bind add color — show inline color picker with preview + add button
     document.getElementById('add-color-theme').onclick = () => {
-      const colorInput = document.getElementById('custom-color-input');
-      colorInput.click();
-      colorInput.onchange = () => {
+      // Remove any existing inline picker
+      const existing = mgr.querySelector('.color-picker-inline');
+      if (existing) { existing.remove(); return; }
+
+      const row = document.createElement('div');
+      row.className = 'color-picker-inline';
+
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = '#e8d4b8';
+
+      const preview = document.createElement('div');
+      preview.className = 'color-picker-preview';
+      const hexLabel = document.createElement('span');
+      hexLabel.className = 'color-picker-hex';
+      hexLabel.textContent = colorInput.value.toUpperCase();
+      const hint = document.createElement('span');
+      hint.className = 'color-picker-hint';
+      hint.textContent = 'Tap swatch to change';
+      preview.appendChild(hexLabel);
+      preview.appendChild(hint);
+
+      colorInput.addEventListener('input', () => {
+        hexLabel.textContent = colorInput.value.toUpperCase();
+      });
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'color-picker-add';
+      addBtn.textContent = 'Add';
+      addBtn.addEventListener('click', () => {
         const color = colorInput.value;
         const theme = {
           id: 'ct-' + Date.now(),
@@ -1246,6 +1273,7 @@ const UIController = {
         CustomThemeStorage.save(AppState.customThemes);
         this.addCustomThemeOption(theme, false);
         this.renderThemeList();
+        row.remove();
         // Scroll to the new theme
         const picker = document.getElementById('style-picker');
         const opt = this.styleOptions.find(o => o.key === theme.id);
@@ -1258,7 +1286,21 @@ const UIController = {
             });
           }, 100);
         }
-      };
+      });
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'color-picker-cancel';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', () => row.remove());
+
+      row.appendChild(colorInput);
+      row.appendChild(preview);
+      row.appendChild(addBtn);
+      row.appendChild(cancelBtn);
+
+      // Insert after the add buttons section
+      const addSection = mgr.querySelector('.theme-manager-add');
+      addSection.after(row);
     };
 
     // Bind add image
