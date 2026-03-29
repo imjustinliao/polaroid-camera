@@ -440,8 +440,18 @@ const PolaroidRenderer = {
       this.downloadCanvas(canvas, styleKey);
     });
 
+    const deleteBtn = document.createElement('div');
+    deleteBtn.className = 'photo-action-btn delete-btn';
+    deleteBtn.title = 'Delete';
+    deleteBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      UIController.deletePhoto(card);
+    });
+
     actions.appendChild(expandBtn);
     actions.appendChild(dlBtn);
+    actions.appendChild(deleteBtn);
 
     card.appendChild(photoWrap);
     card.appendChild(bottom);
@@ -755,6 +765,23 @@ const SoundEngine = {
     }
   },
 
+  playDenied() {
+    const ctx = this.ensureContext();
+    const now = ctx.currentTime;
+    // Short descending tone — "nope"
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  },
+
   trigger(sequence = 'full') {
     const sequences = {
       poweron: () => {
@@ -764,6 +791,9 @@ const SoundEngine = {
         this.playShutter();
         setTimeout(() => this.playFilmAdvance(), 50);
         setTimeout(() => this.playDevelopment(), 1600);
+      },
+      denied: () => {
+        this.playDenied();
       },
     };
     sequences[sequence]?.();
@@ -935,6 +965,7 @@ const UIController = {
   bindGalleryButtons() {
     this.photoStack.addEventListener('click', () => this.openGallery());
     document.getElementById('close-gallery-btn').addEventListener('click', () => this.closeGallery());
+    document.getElementById('export-all-btn').addEventListener('click', () => this.exportAll());
     this.allowCameraBtn.addEventListener('click', () => this.requestCameraPermission());
   },
 
@@ -963,31 +994,65 @@ const UIController = {
 
   initZoom() {
     this.zoomLevel = 1;
-    const slider = document.getElementById('zoom-slider');
+    const MIN_ZOOM = 1;
+    const MAX_ZOOM = 3;
     const video = document.getElementById('camera-feed');
-    const zoomInBtn = document.querySelector('.zoom-in');
-    const zoomOutBtn = document.querySelector('.zoom-out');
+    const track = document.querySelector('.zoom-ruler-track');
+    const indicator = document.getElementById('zoom-indicator');
+    const label = document.getElementById('zoom-label');
+    const ticksContainer = document.getElementById('zoom-ticks');
+
+    // Build ruler ticks: 1.0x to 3.0x
+    for (let z = 10; z <= 30; z++) {
+      const tick = document.createElement('div');
+      const isMajor = z % 10 === 0;
+      const isHalf = z % 5 === 0;
+      tick.className = `zoom-tick ${isMajor ? 'major' : 'minor'}`;
+      if (!isMajor && !isHalf) tick.style.width = '5px';
+      ticksContainer.appendChild(tick);
+
+      if (isMajor) {
+        const lbl = document.createElement('span');
+        lbl.className = 'zoom-tick-label';
+        const fraction = (ticksContainer.children.length - 1) / 20;
+        lbl.style.top = `${8 + fraction * (track.offsetHeight - 16)}px`;
+        lbl.textContent = (z / 10).toFixed(0) + 'x';
+        track.appendChild(lbl);
+      }
+    }
 
     const applyZoom = (val) => {
-      this.zoomLevel = Math.max(1, Math.min(3, parseFloat(val)));
-      slider.value = this.zoomLevel;
+      this.zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, parseFloat(val)));
       video.style.transform = `scale(${this.zoomLevel})`;
+      label.textContent = this.zoomLevel.toFixed(1) + 'x';
+      // Position indicator: top=1x, bottom=3x
+      const frac = (this.zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+      const trackH = track.offsetHeight;
+      indicator.style.top = (8 + frac * (trackH - 16)) + 'px';
     };
 
-    slider.addEventListener('input', (e) => applyZoom(e.target.value));
-    zoomInBtn.addEventListener('click', () => applyZoom(this.zoomLevel + 0.2));
-    zoomOutBtn.addEventListener('click', () => applyZoom(this.zoomLevel - 0.2));
+    // Drag on track to set zoom
+    let dragging = false;
+    const setZoomFromY = (clientY) => {
+      const rect = track.getBoundingClientRect();
+      const y = Math.max(0, Math.min(1, (clientY - rect.top - 8) / (rect.height - 16)));
+      applyZoom(MIN_ZOOM + y * (MAX_ZOOM - MIN_ZOOM));
+    };
 
-    // Keyboard: + / - or = / -
+    track.addEventListener('mousedown', (e) => { dragging = true; setZoomFromY(e.clientY); });
+    track.addEventListener('touchstart', (e) => { dragging = true; setZoomFromY(e.touches[0].clientY); }, { passive: true });
+    window.addEventListener('mousemove', (e) => { if (dragging) setZoomFromY(e.clientY); });
+    window.addEventListener('touchmove', (e) => { if (dragging) setZoomFromY(e.touches[0].clientY); }, { passive: true });
+    window.addEventListener('mouseup', () => { dragging = false; });
+    window.addEventListener('touchend', () => { dragging = false; });
+
+    // Keyboard: + / -
     document.addEventListener('keydown', (e) => {
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault();
-        applyZoom(this.zoomLevel + 0.2);
-      } else if (e.key === '-' || e.key === '_') {
-        e.preventDefault();
-        applyZoom(this.zoomLevel - 0.2);
-      }
+      if (e.key === '+' || e.key === '=') { e.preventDefault(); applyZoom(this.zoomLevel + 0.2); }
+      else if (e.key === '-' || e.key === '_') { e.preventDefault(); applyZoom(this.zoomLevel - 0.2); }
     });
+
+    applyZoom(1);
   },
 
   startPowerOn() {
@@ -1064,8 +1129,16 @@ const UIController = {
   },
 
   async capture() {
-    if (AppState.isCapturing || !AppState.isCameraReady) {
-      console.log('Capture ignored - capturing:', AppState.isCapturing, 'camera ready:', AppState.isCameraReady);
+    if (AppState.isCapturing || !AppState.isCameraReady) return;
+
+    // Enforce 10-photo limit
+    if (AppState.photoCount <= 0) {
+      SoundEngine.trigger('denied');
+      this.shutterBtn.classList.add('limit-reached');
+      this.filmCounter.classList.add('limit-reached');
+      setTimeout(() => {
+        this.shutterBtn.classList.remove('limit-reached');
+      }, 400);
       return;
     }
 
@@ -1186,6 +1259,58 @@ const UIController = {
   closeGallery() {
     this.sceneGallery.classList.remove('active');
     AppState.transition('viewfinder');
+  },
+
+  deletePhoto(cardElement) {
+    // Find and remove from AppState.photos
+    const idx = AppState.photos.findIndex(p => p.element === cardElement);
+    if (idx !== -1) {
+      AppState.photos.splice(idx, 1);
+    }
+    // Remove from DOM with fade
+    cardElement.style.transition = 'opacity 200ms ease-out, transform 200ms ease-out';
+    cardElement.style.opacity = '0';
+    cardElement.style.transform = 'scale(0.8)';
+    setTimeout(() => cardElement.remove(), 200);
+
+    // Update counter — give back a shot
+    AppState.photoCount++;
+    this.filmCounter.textContent = Math.max(0, AppState.photoCount);
+    this.filmCounter.classList.remove('limit-reached');
+    this.galleryCountBadge.textContent = AppState.photos.length;
+
+    // Update photo stack
+    this.rebuildPhotoStack();
+
+    // Hide stack if no photos left
+    if (AppState.photos.length === 0) {
+      this.photoStack.classList.remove('has-photos');
+    }
+  },
+
+  rebuildPhotoStack() {
+    // Remove existing thumbs
+    this.photoStack.querySelectorAll('.stack-thumb').forEach(t => t.remove());
+    // Show last 3
+    const last3 = AppState.photos.slice(-3);
+    for (const photo of last3) {
+      const thumb = document.createElement('div');
+      thumb.className = 'stack-thumb';
+      const mini = PolaroidRenderer.copyCanvas(photo.canvas);
+      thumb.appendChild(mini);
+      this.photoStack.appendChild(thumb);
+    }
+  },
+
+  exportAll() {
+    if (AppState.photos.length === 0) return;
+
+    // Download each photo individually with a slight delay
+    AppState.photos.forEach((photo, i) => {
+      setTimeout(() => {
+        PolaroidRenderer.downloadCanvas(photo.canvas, photo.styleKey || 'polaroid');
+      }, i * 300);
+    });
   },
 
   showLightbox(canvas, styleKey) {

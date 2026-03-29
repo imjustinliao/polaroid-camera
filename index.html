@@ -45,11 +45,13 @@
         <button id="shutter-btn" class="shutter-button" aria-label="Take photo"></button>
       </div>
 
-      <!-- Zoom slider — right side of frame -->
-      <div class="zoom-control">
-        <button class="zoom-btn zoom-in" aria-label="Zoom in">+</button>
-        <input type="range" id="zoom-slider" class="zoom-slider" min="1" max="3" step="0.1" value="1" orient="vertical">
-        <button class="zoom-btn zoom-out" aria-label="Zoom out">&minus;</button>
+      <!-- Zoom ruler — right side of frame -->
+      <div class="zoom-ruler" id="zoom-ruler">
+        <div class="zoom-ruler-track">
+          <div class="zoom-ruler-ticks" id="zoom-ticks"></div>
+          <div class="zoom-ruler-indicator" id="zoom-indicator"></div>
+        </div>
+        <div class="zoom-level-label" id="zoom-label">1.0x</div>
       </div>
 
       <!-- Photo stack — bottom right of frame -->
@@ -72,6 +74,9 @@
       <button id="close-gallery-btn" class="close-gallery-btn" aria-label="Close gallery">&#x2715;</button>
     </div>
     <div id="gallery-grid" class="gallery-grid"></div>
+    <div class="gallery-footer">
+      <button id="export-all-btn" class="export-all-btn">Export All</button>
+    </div>
   </div>
 
   <!-- Eject Stage (where polaroids animate before moving to gallery) -->

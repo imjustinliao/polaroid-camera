@@ -596,11 +596,11 @@ button:disabled {
   display: none;
 }
 
-/* ─── Zoom Control ─── */
+/* ─── Zoom Ruler ─── */
 
-.zoom-control {
+.zoom-ruler {
   position: absolute;
-  right: 14px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 31;
@@ -609,62 +609,74 @@ button:disabled {
   align-items: center;
   gap: 6px;
   pointer-events: auto;
+  cursor: ns-resize;
 }
 
-.zoom-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.35);
-  color: var(--color-hud-text);
-  font-size: 16px;
-  font-family: var(--font-mono);
-  font-weight: bold;
+.zoom-ruler-track {
+  position: relative;
+  width: 24px;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.zoom-ruler-ticks {
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 150ms ease-out;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  line-height: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 0;
 }
 
-.zoom-btn:hover {
-  background: rgba(0, 0, 0, 0.55);
+.zoom-tick {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 auto;
 }
 
-/* Vertical range slider */
-.zoom-slider {
-  writing-mode: vertical-lr;
-  direction: rtl;
-  width: 4px;
-  height: 80px;
-  -webkit-appearance: none;
-  appearance: none;
+.zoom-tick.major {
+  width: 14px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.zoom-tick.minor {
+  width: 8px;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
 }
 
-.zoom-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--color-cream);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  cursor: pointer;
+.zoom-tick-label {
+  position: absolute;
+  right: 28px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(240, 225, 200, 0.5);
+  transform: translateY(-50%);
+  white-space: nowrap;
 }
 
-.zoom-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+.zoom-ruler-indicator {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 3px;
   background: var(--color-cream);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  border: none;
-  cursor: pointer;
+  border-radius: 1.5px;
+  box-shadow: 0 0 6px rgba(245, 240, 232, 0.4);
+  transition: top 80ms ease-out;
+  top: 8px; /* JS positions this */
+}
+
+.zoom-level-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--color-hud-text);
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
@@ -826,6 +838,59 @@ button:disabled {
 .photo-action-btn:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
+}
+
+.photo-action-btn.delete-btn:hover {
+  background: rgba(200, 60, 60, 0.5);
+}
+
+/* Gallery footer */
+.gallery-footer {
+  padding: 12px 20px max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(240, 225, 200, 0.1);
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.export-all-btn {
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(240, 225, 200, 0.25);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: var(--color-hud-text);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.export-all-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(240, 225, 200, 0.4);
+}
+
+/* Shutter shake animation when limit reached */
+@keyframes shake-no {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-4px); }
+  30% { transform: translateX(4px); }
+  45% { transform: translateX(-3px); }
+  60% { transform: translateX(3px); }
+  75% { transform: translateX(-1px); }
+  90% { transform: translateX(1px); }
+}
+
+.shutter-button.limit-reached {
+  animation: shake-no 400ms ease-out;
+  opacity: 0.5;
+}
+
+.film-counter.limit-reached {
+  color: var(--color-shutter-red);
 }
 
 .photo-action-btn svg {
@@ -1125,8 +1190,12 @@ button:disabled {
     height: 56px;
   }
 
-  .zoom-control {
+  .zoom-ruler {
     right: 10px;
+  }
+
+  .zoom-ruler-track {
+    height: 100px;
   }
 
   .gallery-grid {
@@ -1183,12 +1252,17 @@ button:disabled {
     height: 50px;
   }
 
-  .zoom-control {
-    right: 8px;
+  .zoom-ruler {
+    right: 6px;
   }
 
-  .zoom-slider {
-    height: 60px;
+  .zoom-ruler-track {
+    height: 80px;
+    width: 20px;
+  }
+
+  .zoom-level-label {
+    font-size: 9px;
   }
 
   .gallery-count-badge {
