@@ -37,7 +37,10 @@
   <div id="scene-poweron">
     <div class="iris-overlay">
       <div class="startup-flicker"></div>
-      <div class="boot-text">POLAROID</div>
+      <div class="boot-text-wrap">
+        <div class="boot-text">POLAROID</div>
+        <div class="boot-byline">By Justin Liao</div>
+      </div>
     </div>
   </div>
 
@@ -138,6 +141,14 @@
       <button id="allow-camera-btn" class="permission-btn">Allow Camera</button>
       <p id="permission-hint" class="permission-hint">You can change this in your browser settings at any time.</p>
     </div>
+  </div>
+
+  <!-- Landscape Lock — shown on mobile landscape to enforce portrait -->
+  <div class="landscape-lock">
+    <svg class="landscape-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/>
+    </svg>
+    <span class="landscape-lock-text">Rotate to portrait</span>
   </div>
 
   <!-- Theme Manager Popup -->

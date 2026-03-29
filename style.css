@@ -127,15 +127,30 @@ button:disabled {
   100% { opacity: 0.15; }
 }
 
-.boot-text {
+.boot-text-wrap {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: boot-fade 1.8s ease-in-out forwards;
+}
+
+.boot-text {
   font-family: var(--font-mono);
   font-size: clamp(48px, 12vw, 96px);
   font-weight: bold;
   letter-spacing: 0.3em;
   color: rgba(240, 225, 200, 0.8);
   text-shadow: 0 0 20px rgba(255, 200, 100, 0.4);
-  animation: boot-fade 1.8s ease-in-out forwards;
+}
+
+.boot-byline {
+  font-family: var(--font-serif);
+  font-size: clamp(14px, 3vw, 22px);
+  font-style: italic;
+  letter-spacing: 0.15em;
+  color: rgba(240, 225, 200, 0.45);
 }
 
 @keyframes boot-fade {
@@ -1720,6 +1735,49 @@ button:disabled {
 
   .gallery-title {
     font-size: 20px;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────── */
+/* LANDSCAPE LOCK — mobile only, force portrait                                 */
+/* ────────────────────────────────────────────────────────────────────────────── */
+
+.landscape-lock {
+  display: none;
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  /* Show the rotate overlay */
+  .landscape-lock {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--color-warm-dark);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .landscape-lock-icon {
+    width: 48px;
+    height: 48px;
+    color: rgba(240, 225, 200, 0.5);
+    animation: rotate-hint 1.5s ease-in-out infinite;
+  }
+
+  @keyframes rotate-hint {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
+
+  .landscape-lock-text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: rgba(240, 225, 200, 0.6);
+    letter-spacing: 0.1em;
+    text-align: center;
   }
 }
 
