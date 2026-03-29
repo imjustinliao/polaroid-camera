@@ -400,6 +400,34 @@ const CameraManager = {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const PolaroidRenderer = {
+  // Derive a date stamp color that contrasts with the background
+  // Returns a CSS color string — dark ink on light paper, light ink on dark paper
+  getDateColor(styleKey) {
+    const customTheme = AppState.customThemes.find(t => t.id === styleKey);
+    let hex = '#f5f0e8'; // default light paper
+    if (customTheme) {
+      if (customTheme.type === 'color') hex = customTheme.color;
+      else return 'rgba(255, 245, 235, 0.45)'; // image bg → light subtle ink
+    } else {
+      const style = STYLES[styleKey];
+      if (style) hex = style.paperColor || '#f5f0e8';
+    }
+    // Parse hex → luminance
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (lum > 0.55) {
+      // Light background → dark warm ink
+      const dark = Math.round(40 + (1 - lum) * 60);
+      return `rgba(${dark}, ${Math.round(dark * 0.8)}, ${Math.round(dark * 0.6)}, 0.4)`;
+    } else {
+      // Dark background → light warm ink
+      const light = Math.round(180 + lum * 60);
+      return `rgba(${light}, ${Math.round(light * 0.95)}, ${Math.round(light * 0.9)}, 0.4)`;
+    }
+  },
+
   render(photoCanvas, styleKey) {
     const style = STYLES[styleKey] || STYLES.classic;
     const canvas = document.createElement('canvas');
@@ -584,9 +612,10 @@ const PolaroidRenderer = {
     const bottom = document.createElement('div');
     bottom.className = 'polaroid-bottom';
 
-    // Date stamp
+    // Date stamp — color adapts to the paper/background
     const dateEl = document.createElement('div');
     dateEl.className = 'polaroid-date';
+    dateEl.style.color = this.getDateColor(styleKey);
     const photoDate = timestamp ? new Date(timestamp) : new Date();
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     dateEl.textContent = `${months[photoDate.getMonth()]} ${photoDate.getDate()}, ${photoDate.getFullYear()}`;
@@ -713,7 +742,7 @@ const PolaroidRenderer = {
     const dateStr = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     ctx.save();
     ctx.font = 'italic 24px Georgia, serif';
-    ctx.fillStyle = 'rgba(60, 45, 30, 0.7)';
+    ctx.fillStyle = this.getDateColor(styleKey);
     ctx.textAlign = 'right';
     ctx.fillText(dateStr, w - pad - 8, h - bottomPad * 0.28);
     ctx.restore();
