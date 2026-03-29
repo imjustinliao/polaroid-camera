@@ -22,7 +22,7 @@ const STYLES = {
     name: 'Warm',
     borderColor: '#f5d5b8',
     paperColor: '#faf0e4',
-    paperTexture: { baseFreq: '.5', octaves: 3, opacity: 0.08 },
+    paperTexture: { type: 'turbulence', baseFreq: '.03 .5', octaves: 2, opacity: 0.1 },
     photoFilter: 'saturate(0.8) sepia(0.15) brightness(1.05)',
     tint: { color: 'rgba(255, 200, 100, 0.08)', op: 'screen' },
     grain: 0.015,
@@ -44,7 +44,7 @@ const STYLES = {
     name: 'Fade',
     borderColor: '#e8d9cc',
     paperColor: '#f2ebe2',
-    paperTexture: { baseFreq: '.45', octaves: 3, opacity: 0.09 },
+    paperTexture: { type: 'fractalNoise', baseFreq: '.15', octaves: 2, opacity: 0.12 },
     photoFilter: 'saturate(0.6) brightness(1.1) contrast(0.9)',
     tint: { color: 'rgba(255, 255, 255, 0.15)', op: 'screen' },
     grain: 0.018,
@@ -55,7 +55,7 @@ const STYLES = {
     name: 'Vintage',
     borderColor: '#c9a876',
     paperColor: '#e8daba',
-    paperTexture: { baseFreq: '.4', octaves: 3, opacity: 0.12 },
+    paperTexture: { type: 'turbulence', baseFreq: '.2', octaves: 6, opacity: 0.14 },
     photoFilter: 'saturate(0.5) sepia(0.3) brightness(0.95)',
     tint: { color: 'rgba(200, 120, 60, 0.12)', op: 'overlay' },
     grain: 0.02,
@@ -66,7 +66,7 @@ const STYLES = {
     name: 'Noir',
     borderColor: '#d5d0c8',
     paperColor: '#eae7e0',
-    paperTexture: { baseFreq: '.7', octaves: 4, opacity: 0.07 },
+    paperTexture: { type: 'turbulence', baseFreq: '.25 .25', octaves: 2, opacity: 0.09 },
     photoFilter: 'saturate(0) contrast(1.2) brightness(0.95)',
     tint: null,
     grain: 0.025,
@@ -77,7 +77,7 @@ const STYLES = {
     name: 'Sunset',
     borderColor: '#f0c8a0',
     paperColor: '#faf0e0',
-    paperTexture: { baseFreq: '.55', octaves: 3, opacity: 0.07 },
+    paperTexture: { type: 'fractalNoise', baseFreq: '.5 .03', octaves: 3, opacity: 0.08 },
     photoFilter: 'saturate(1.2) contrast(1.05) brightness(1.02)',
     tint: { color: 'rgba(255, 120, 50, 0.1)', op: 'screen' },
     grain: 0.012,
@@ -88,7 +88,7 @@ const STYLES = {
     name: 'Forest',
     borderColor: '#c8d4c0',
     paperColor: '#e8ede4',
-    paperTexture: { baseFreq: '.35', octaves: 2, opacity: 0.1 },
+    paperTexture: { type: 'turbulence', baseFreq: '.12', octaves: 4, opacity: 0.13 },
     photoFilter: 'saturate(0.75) hue-rotate(15deg) brightness(0.92)',
     tint: { color: 'rgba(60, 120, 60, 0.08)', op: 'multiply' },
     grain: 0.014,
@@ -121,7 +121,7 @@ const STYLES = {
     name: 'Amber',
     borderColor: '#d8b880',
     paperColor: '#ece0c8',
-    paperTexture: { baseFreq: '.4', octaves: 2, opacity: 0.11 },
+    paperTexture: { type: 'turbulence', baseFreq: '.18', octaves: 5, opacity: 0.15 },
     photoFilter: 'saturate(0.65) sepia(0.2) contrast(1.08)',
     tint: { color: 'rgba(180, 130, 50, 0.1)', op: 'overlay' },
     grain: 0.022,
@@ -132,7 +132,7 @@ const STYLES = {
     name: 'Dusk',
     borderColor: '#c0b0d0',
     paperColor: '#e8e0f0',
-    paperTexture: { baseFreq: '.6', octaves: 4, opacity: 0.08 },
+    paperTexture: { type: 'turbulence', baseFreq: '.35 .15', octaves: 3, opacity: 0.1 },
     photoFilter: 'saturate(0.7) hue-rotate(-20deg) brightness(0.9)',
     tint: { color: 'rgba(100, 60, 150, 0.08)', op: 'overlay' },
     grain: 0.016,
@@ -208,6 +208,8 @@ const AppState = {
   isCapturing: false,
   isCameraReady: false,
   cameraFacingMode: 'environment', // 'environment' or 'user'
+  customBgUrl: null, // data URL for custom theme background
+  customBgImg: null, // loaded Image element for export
 
   transition(to) {
     console.log('Transitioning to state:', to);
@@ -361,18 +363,24 @@ const CameraManager = {
       const sy = (vh - side) / 2;
       ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
     } else {
-      // Wide lens (< 1x): show more of the frame, pad with black if needed
-      const side = Math.min(vw, vh);
-      const visibleSide = side / zoomLevel; // larger than actual
-      const sx = (vw - visibleSide) / 2;
-      const sy = (vh - visibleSide) / 2;
-      // Draw the full video scaled down, centered
-      ctx.fillStyle = '#000';
+      // Wide lens (< 1x): show wider field of view with vignette falloff
+      const baseSide = Math.min(vw, vh);
+      const t = Math.min(1, (1 - zoomLevel) / 0.5); // 0 at 1x, 1 at 0.5x
+      // Expand crop beyond the square to show more of the video frame
+      const cropW = Math.min(vw, baseSide + t * (vw - baseSide));
+      const cropH = Math.min(vh, baseSide + t * (vh - baseSide));
+      const sx = (vw - cropW) / 2;
+      const sy = (vh - cropH) / 2;
+      ctx.drawImage(this.videoEl, sx, sy, cropW, cropH, 0, 0, 800, 800);
+
+      // Wide-angle edge vignette — blends naturally instead of black bars
+      const vigStrength = Math.min(0.45, (1 - zoomLevel) * 0.7);
+      const grad = ctx.createRadialGradient(400, 400, 260, 400, 400, 400);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(0.8, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, `rgba(0,0,0,${vigStrength})`);
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 800, 800);
-      ctx.drawImage(this.videoEl,
-        Math.max(0, sx), Math.max(0, sy),
-        Math.min(vw, visibleSide), Math.min(vh, visibleSide),
-        0, 0, 800, 800);
     }
 
     return canvas;
@@ -392,7 +400,7 @@ const CameraManager = {
 
 const PolaroidRenderer = {
   render(photoCanvas, styleKey) {
-    const style = STYLES[styleKey];
+    const style = STYLES[styleKey] || STYLES.classic;
     const canvas = document.createElement('canvas');
     // Output is photo-only square — the HTML card provides the polaroid frame
     canvas.width = PHOTO_SIZE;
@@ -539,16 +547,22 @@ const PolaroidRenderer = {
     return copy;
   },
 
-  buildPolaroidElement(canvas, styleKey, copyCanvasData = false) {
-    const style = STYLES[styleKey];
+  buildPolaroidElement(canvas, styleKey, copyCanvasData = false, timestamp = null) {
+    const style = STYLES[styleKey] || STYLES.classic;
     const card = document.createElement('div');
     card.className = 'polaroid-card';
-    // Apply the style's paper color and unique texture
-    const paperBg = style.paperColor || '#f5f0e8';
-    const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
-    const textureSvg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
-    card.style.background = `${textureSvg}, ${paperBg}`;
-    card.style.backgroundSize = '120px 120px, 100% 100%';
+
+    // Apply background: custom uploaded image or paper texture
+    if (styleKey === 'custom' && AppState.customBgUrl) {
+      card.style.background = `url(${AppState.customBgUrl}) center/cover`;
+    } else {
+      const paperBg = style.paperColor || '#f5f0e8';
+      const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
+      const texType = tex.type || 'fractalNoise';
+      const textureSvg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+      card.style.background = `${textureSvg}, ${paperBg}`;
+      card.style.backgroundSize = '120px 120px, 100% 100%';
+    }
 
     const displayCanvas = copyCanvasData ? this.copyCanvas(canvas) : canvas;
 
@@ -574,7 +588,8 @@ const PolaroidRenderer = {
     expandBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
     expandBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      UIController.showLightbox(canvas, styleKey);
+      const photo = AppState.photos.find(p => p.canvas === canvas);
+      UIController.showLightbox(canvas, styleKey, photo?.timestamp || timestamp);
     });
 
     const dlBtn = document.createElement('div');
@@ -583,7 +598,8 @@ const PolaroidRenderer = {
     dlBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
     dlBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.downloadCanvas(canvas, styleKey);
+      const photo = AppState.photos.find(p => p.canvas === canvas);
+      this.downloadCanvas(canvas, styleKey, photo?.timestamp || timestamp || Date.now());
     });
 
     const deleteBtn = document.createElement('div');
@@ -606,10 +622,10 @@ const PolaroidRenderer = {
     return card;
   },
 
-  renderExport(photoCanvas, styleKey) {
+  renderExport(photoCanvas, styleKey, timestamp) {
     // Renders a full polaroid frame canvas for download
     // Matches CSS card ratio: 5% side/top padding, 18% bottom
-    const style = STYLES[styleKey];
+    const style = STYLES[styleKey] || STYLES.classic;
     const photoSize = PHOTO_SIZE; // 800
     // photo is 90% of width → width = photoSize / 0.9
     const w = Math.round(photoSize / 0.9);     // ~889
@@ -622,22 +638,52 @@ const PolaroidRenderer = {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
 
-    // Paper background color
-    ctx.fillStyle = style.paperColor || '#f5f0e8';
-    ctx.fillRect(0, 0, w, h);
+    // Background: custom image or paper color
+    if (styleKey === 'custom' && AppState.customBgImg) {
+      // Draw custom background image, covering the full frame
+      const img = AppState.customBgImg;
+      const imgAr = img.width / img.height;
+      const frameAr = w / h;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (imgAr > frameAr) {
+        sw = img.height * frameAr;
+        sx = (img.width - sw) / 2;
+      } else {
+        sh = img.width / frameAr;
+        sy = (img.height - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+    } else {
+      ctx.fillStyle = style.paperColor || '#f5f0e8';
+      ctx.fillRect(0, 0, w, h);
+    }
 
-    // Paper texture overlay
+    // Paper texture overlay — varied by texture type
     const tex = style.paperTexture || { baseFreq: '.65', octaves: 4, opacity: 0.06 };
-    // Draw subtle noise grain for texture
-    const grainCount = Math.floor(w * h * 0.002);
+    const isTurbulence = (tex.type === 'turbulence');
+    const grainCount = Math.floor(w * h * (isTurbulence ? 0.003 : 0.002));
     for (let i = 0; i < grainCount; i++) {
       const x = Math.random() * w;
       const y = Math.random() * h;
       const alpha = Math.random() * tex.opacity * 3;
-      ctx.fillStyle = Math.random() > 0.5
-        ? `rgba(0, 0, 0, ${alpha})`
-        : `rgba(255, 255, 255, ${alpha * 0.5})`;
-      ctx.fillRect(x, y, 1, 1);
+      if (isTurbulence) {
+        // Directional lines for turbulence textures (linen/canvas/fiber)
+        const lineLen = 1 + Math.random() * 3;
+        const isHoriz = tex.baseFreq.includes(' ') && parseFloat(tex.baseFreq.split(' ')[0]) < parseFloat(tex.baseFreq.split(' ')[1]);
+        ctx.fillStyle = Math.random() > 0.5
+          ? `rgba(0, 0, 0, ${alpha})`
+          : `rgba(255, 255, 255, ${alpha * 0.4})`;
+        if (isHoriz) {
+          ctx.fillRect(x, y, lineLen, 1);
+        } else {
+          ctx.fillRect(x, y, 1, lineLen);
+        }
+      } else {
+        ctx.fillStyle = Math.random() > 0.5
+          ? `rgba(0, 0, 0, ${alpha})`
+          : `rgba(255, 255, 255, ${alpha * 0.5})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
     }
 
     // Draw the photo
@@ -649,22 +695,22 @@ const PolaroidRenderer = {
     ctx.strokeRect(pad - 0.5, pad - 0.5, photoSize + 1, photoSize + 1);
 
     // Date stamp in the bottom border area — handwritten style
-    const now = new Date();
+    const date = timestamp ? new Date(timestamp) : new Date();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const dateStr = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+    const dateStr = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     ctx.save();
-    ctx.font = 'italic 22px Georgia, serif';
-    ctx.fillStyle = 'rgba(80, 65, 50, 0.4)';
+    ctx.font = 'italic 24px Georgia, serif';
+    ctx.fillStyle = 'rgba(80, 65, 50, 0.55)';
     ctx.textAlign = 'right';
-    ctx.fillText(dateStr, w - pad - 8, h - bottomPad * 0.25);
+    ctx.fillText(dateStr, w - pad - 8, h - bottomPad * 0.28);
     ctx.restore();
 
     return canvas;
   },
 
-  downloadCanvas(canvas, styleKey) {
+  downloadCanvas(canvas, styleKey, timestamp) {
     // Render the full polaroid frame for export
-    const exportCanvas = this.renderExport(canvas, styleKey);
+    const exportCanvas = this.renderExport(canvas, styleKey, timestamp);
     try {
       exportCanvas.toBlob((blob) => {
         if (!blob) {
@@ -1063,6 +1109,52 @@ const UIController = {
       this.styleOptions.push({ key, element: option });
     }
 
+    // Add custom upload option at the end
+    const customOption = document.createElement('div');
+    customOption.className = 'style-option custom-upload-option';
+    customOption.dataset.styleKey = 'custom';
+    customOption.title = 'Custom';
+    customOption.innerHTML = '<span class="custom-plus">+</span>';
+    customOption.addEventListener('click', () => {
+      if (!AppState.customBgUrl) {
+        document.getElementById('custom-bg-input').click();
+      } else {
+        // Already has image — scroll to center
+        const wrapperWidth = picker.parentElement.offsetWidth;
+        picker.scrollTo({
+          left: customOption.offsetLeft - (wrapperWidth / 2) + (customOption.offsetWidth / 2),
+          behavior: 'smooth',
+        });
+      }
+    });
+    picker.appendChild(customOption);
+    this.styleOptions.push({ key: 'custom', element: customOption });
+
+    // Handle custom background upload
+    document.getElementById('custom-bg-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        AppState.customBgUrl = ev.target.result;
+        // Pre-load Image for export rendering
+        const img = new Image();
+        img.onload = () => { AppState.customBgImg = img; };
+        img.src = AppState.customBgUrl;
+        customOption.style.backgroundImage = `url(${AppState.customBgUrl})`;
+        customOption.classList.add('has-image');
+        // Select the custom style
+        const wrapperWidth = picker.parentElement.offsetWidth;
+        picker.scrollTo({
+          left: customOption.offsetLeft - (wrapperWidth / 2) + (customOption.offsetWidth / 2),
+          behavior: 'smooth',
+        });
+        AppState.currentStyle = 'custom';
+      };
+      reader.readAsDataURL(file);
+      e.target.value = ''; // reset so same file can be re-uploaded
+    });
+
     // Scroll listener — whichever option is closest to center gets selected
     let scrollTimeout;
     picker.addEventListener('scroll', () => {
@@ -1110,7 +1202,8 @@ const UIController = {
       document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('selected'));
       closest.element.classList.add('selected');
       AppState.currentStyle = closest.key;
-      this.styleName.textContent = STYLES[closest.key].name.toUpperCase();
+      const styleName = closest.key === 'custom' ? 'CUSTOM' : STYLES[closest.key].name.toUpperCase();
+      if (this.styleName) this.styleName.textContent = styleName;
     }
   },
 
@@ -1155,6 +1248,8 @@ const UIController = {
   async toggleCamera() {
     this.shutterBtn.disabled = true;
     await CameraManager.toggleFacingMode();
+    // Reapply zoom to update mirror transform for new camera
+    if (this._applyZoom) this._applyZoom(this.zoomLevel);
     this.shutterBtn.disabled = false;
   },
 
@@ -1195,6 +1290,7 @@ const UIController = {
     const MAX_ZOOM = 3;
     const DEFAULT_ZOOM = 1;
     const video = document.getElementById('camera-feed');
+    const clip = document.querySelector('.camera-clip');
     const track = document.querySelector('.zoom-ruler-track');
     const indicator = document.getElementById('zoom-indicator');
     const label = document.getElementById('zoom-label');
@@ -1212,16 +1308,30 @@ const UIController = {
 
     const applyZoom = (val) => {
       this.zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, parseFloat(val)));
-      // For wide lens (<1x), scale down the video; for zoom (>1x), scale up
       const isMirrored = CameraManager._isMirrored;
-      const scaleX = isMirrored ? -this.zoomLevel : this.zoomLevel;
-      video.style.transform = `scaleX(${scaleX}) scaleY(${this.zoomLevel})`;
+
+      // Viewfinder: at zoom < 1x, keep video at 1x and use CSS wide-angle effect
+      // At zoom >= 1x, scale up the video for digital zoom
+      const visualZoom = Math.max(1, this.zoomLevel);
+      const scaleX = isMirrored ? -visualZoom : visualZoom;
+      video.style.transform = `scaleX(${scaleX}) scaleY(${visualZoom})`;
+
+      // Toggle wide-angle vignette class
+      if (this.zoomLevel < 1) {
+        clip.classList.add('wide-angle');
+      } else {
+        clip.classList.remove('wide-angle');
+      }
+
       label.textContent = this.zoomLevel.toFixed(1) + 'x';
       // Position indicator: top=0.5x, bottom=3x
       const frac = (this.zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
       const trackH = track.offsetHeight;
       indicator.style.top = (8 + frac * (trackH - 16)) + 'px';
     };
+
+    // Expose applyZoom so it can be called after camera init to fix mirror
+    this._applyZoom = applyZoom;
 
     // Drag on track to set zoom
     let dragging = false;
@@ -1255,7 +1365,7 @@ const UIController = {
     for (const item of saved) {
       const canvas = await PhotoStorage.dataUrlToCanvas(item.dataUrl);
       if (canvas) {
-        this.addPhotoToGallery(canvas, item.styleKey || 'classic', true);
+        this.addPhotoToGallery(canvas, item.styleKey || 'classic', true, item.timestamp);
       }
     }
     // Update photo count
@@ -1287,6 +1397,8 @@ const UIController = {
         AppState.isCameraReady = true;
         this.sceneViewfinder.classList.add('camera-ready');
         this.permissionOverlay.classList.add('hidden');
+        // Reapply zoom to update mirror transform for selfie camera
+        if (this._applyZoom) this._applyZoom(this.zoomLevel);
       } else {
         console.log('Camera initialization failed, showing permission prompt');
         this.showPermissionPrompt();
@@ -1328,6 +1440,8 @@ const UIController = {
       AppState.isCameraReady = true;
       this.sceneViewfinder.classList.add('camera-ready');
       this.permissionOverlay.classList.add('hidden');
+      // Reapply zoom to update mirror transform
+      if (this._applyZoom) this._applyZoom(this.zoomLevel);
     } else {
       console.log('Camera permission denied');
       btnEl.disabled = false;
@@ -1411,8 +1525,8 @@ const UIController = {
     PhotoStorage.save(AppState.photos);
   },
 
-  addPhotoToGallery(canvas, styleKey, skipAnimation) {
-    const galleryCard = PolaroidRenderer.buildPolaroidElement(canvas, styleKey, true);
+  addPhotoToGallery(canvas, styleKey, skipAnimation, timestamp) {
+    const galleryCard = PolaroidRenderer.buildPolaroidElement(canvas, styleKey, true, timestamp);
     galleryCard.classList.add('gallery-photo');
     const devOverlay = galleryCard.querySelector('.develop-overlay');
     if (devOverlay) devOverlay.remove();
@@ -1515,12 +1629,12 @@ const UIController = {
     // Download each photo individually with a slight delay
     AppState.photos.forEach((photo, i) => {
       setTimeout(() => {
-        PolaroidRenderer.downloadCanvas(photo.canvas, photo.styleKey || 'polaroid');
+        PolaroidRenderer.downloadCanvas(photo.canvas, photo.styleKey || 'polaroid', photo.timestamp);
       }, i * 300);
     });
   },
 
-  showLightbox(canvas, styleKey) {
+  showLightbox(canvas, styleKey, timestamp) {
     // Remove existing lightbox if any
     const existing = document.querySelector('.photo-lightbox');
     if (existing) existing.remove();
@@ -1529,7 +1643,7 @@ const UIController = {
     lightbox.className = 'photo-lightbox';
 
     // Build a large polaroid card for display
-    const card = PolaroidRenderer.buildPolaroidElement(canvas, styleKey, true);
+    const card = PolaroidRenderer.buildPolaroidElement(canvas, styleKey, true, timestamp);
     const devOverlay = card.querySelector('.develop-overlay');
     if (devOverlay) devOverlay.remove();
     const actionsOverlay = card.querySelector('.photo-actions');

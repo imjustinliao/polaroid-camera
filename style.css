@@ -307,7 +307,7 @@ button:disabled {
 
 .vf-viewfinder-inner {
   position: absolute;
-  width: 16px;
+  width: 12px;
   height: 24px;
   top: 50%;
   left: 50%;
@@ -1274,6 +1274,49 @@ button:disabled {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
+/* WIDE-ANGLE LENS EFFECT                                                       */
+/* ────────────────────────────────────────────────────────────────────────────── */
+
+.camera-clip.wide-angle .vf-vignette {
+  background: radial-gradient(
+    ellipse 65% 55% at 50% 50%,
+    transparent 20%,
+    var(--color-vignette-start) 50%,
+    var(--color-vignette-dark) 80%
+  );
+  transition: background 300ms ease-out;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────── */
+/* CUSTOM UPLOAD OPTION                                                         */
+/* ────────────────────────────────────────────────────────────────────────────── */
+
+.custom-upload-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1.5px dashed rgba(240, 225, 200, 0.3) !important;
+}
+
+.custom-upload-option .custom-plus {
+  font-size: 18px;
+  font-weight: bold;
+  color: rgba(240, 225, 200, 0.5);
+  line-height: 1;
+}
+
+.custom-upload-option.has-image {
+  border-style: solid !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.custom-upload-option.has-image .custom-plus {
+  display: none;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────── */
 /* RESPONSIVE: Mobile & Tablet */
 /* ────────────────────────────────────────────────────────────────────────────── */
 
@@ -1288,6 +1331,7 @@ button:disabled {
     /* Taller than square — extra height for HUD strips */
     height: min(calc((100vw - 16px) * 1.25), calc(100dvh - 120px), calc(100vh - 120px));
     border-radius: 8px;
+    box-shadow: none;
   }
 
   .camera-clip {
@@ -1296,13 +1340,13 @@ button:disabled {
 
   /* Top/bottom HUD strips get subtle dark tint so controls are readable */
   .hud-top {
-    padding: 10px 16px;
+    padding: 14px 20px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
     border-radius: 8px 8px 0 0;
   }
 
   .hud-bottom {
-    padding: 10px 16px 14px;
+    padding: 16px 20px 20px;
     gap: 10px;
   }
 
@@ -1352,7 +1396,7 @@ button:disabled {
   }
 
   .vf-viewfinder-inner {
-    width: 12px;
+    width: 9px;
     height: 18px;
   }
 
