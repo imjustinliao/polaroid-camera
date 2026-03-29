@@ -166,18 +166,26 @@ button:disabled {
   opacity: 1;
 }
 
-/* Video feed: always show a centered square matching the polaroid crop.
-   What you see = what you get. */
-#camera-feed {
+/* Camera frame: centered square — everything lives inside this */
+.camera-frame {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* Square: use the smaller viewport dimension */
   width: min(100vw, 100vh);
   height: min(100vw, 100vh);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+#camera-feed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
+  transform-origin: center center;
 }
 
 /* Viewfinder Overlays */
@@ -237,16 +245,11 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Square frame guide — outlines the actual capture area */
+/* Frame guide — thin border at edge of camera square */
 .vf-frame-guides::before {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  /* Match the video square size with small inset */
-  width: calc(min(100vw, 100vh) - 16px);
-  height: calc(min(100vw, 100vh) - 16px);
-  transform: translate(-50%, -50%);
+  inset: 6px;
   border: 1.5px solid rgba(240, 225, 200, 0.15);
   border-radius: 3px;
 }
@@ -294,7 +297,7 @@ button:disabled {
   left: 0;
   right: 0;
   z-index: 30;
-  padding: max(16px, env(safe-area-inset-top)) 20px;
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -303,7 +306,6 @@ button:disabled {
 
 .hud-label {
   font-family: var(--font-mono);
-  font-size: 12px;
   font-weight: bold;
   letter-spacing: 0.2em;
   color: var(--color-hud-text);
@@ -311,6 +313,7 @@ button:disabled {
 }
 
 .film-counter {
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -321,10 +324,8 @@ button:disabled {
   left: 50%;
   transform: translateX(-50%);
   opacity: 0.6;
-}
-
-.style-name {
-  display: none;
+  font-size: 18px;
+  letter-spacing: 0.35em;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
@@ -351,8 +352,8 @@ button:disabled {
 
 .photo-stack {
   position: absolute;
-  bottom: max(24px, env(safe-area-inset-bottom));
-  right: max(20px, env(safe-area-inset-right));
+  bottom: 16px;
+  right: 16px;
   width: 64px;
   height: 72px;
   z-index: 31;
@@ -572,8 +573,8 @@ button:disabled {
 
 .toggle-camera-btn {
   position: absolute;
-  top: max(16px, env(safe-area-inset-top));
-  right: 16px;
+  top: 14px;
+  right: 14px;
   width: 44px;
   height: 44px;
   display: flex;
@@ -593,6 +594,77 @@ button:disabled {
 
 .toggle-camera-btn.hidden {
   display: none;
+}
+
+/* ─── Zoom Control ─── */
+
+.zoom-control {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 31;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.zoom-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-hud-text);
+  font-size: 16px;
+  font-family: var(--font-mono);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 150ms ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  line-height: 1;
+}
+
+.zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Vertical range slider */
+.zoom-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 4px;
+  height: 80px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-cream);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-cream);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  border: none;
+  cursor: pointer;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────── */
@@ -1044,11 +1116,17 @@ button:disabled {
   .photo-stack {
     width: 56px;
     height: 64px;
+    bottom: 12px;
+    right: 12px;
   }
 
   .stack-thumb {
     width: 48px;
     height: 56px;
+  }
+
+  .zoom-control {
+    right: 10px;
   }
 
   .gallery-grid {
@@ -1096,13 +1174,21 @@ button:disabled {
   .photo-stack {
     width: 50px;
     height: 58px;
-    bottom: max(16px, env(safe-area-inset-bottom));
-    right: max(12px, env(safe-area-inset-right));
+    bottom: 10px;
+    right: 10px;
   }
 
   .stack-thumb {
     width: 42px;
     height: 50px;
+  }
+
+  .zoom-control {
+    right: 8px;
+  }
+
+  .zoom-slider {
+    height: 60px;
   }
 
   .gallery-count-badge {

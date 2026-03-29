@@ -244,12 +244,19 @@ const CameraManager = {
     await this.init();
   },
 
-  capture() {
+  capture(zoomLevel = 1) {
+    const vw = this.videoEl.videoWidth || 1280;
+    const vh = this.videoEl.videoHeight || 960;
+    // Crop to the zoomed square center region
+    const side = Math.min(vw, vh) / zoomLevel;
+    const sx = (vw - side) / 2;
+    const sy = (vh - side) / 2;
+
     const canvas = document.createElement('canvas');
-    canvas.width = this.videoEl.videoWidth || 1280;
-    canvas.height = this.videoEl.videoHeight || 960;
+    canvas.width = 800;
+    canvas.height = 800;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(this.videoEl, 0, 0);
+    ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, 800, 800);
     return canvas;
   },
 
@@ -775,6 +782,7 @@ const UIController = {
     this.bindCameraToggle();
     this.bindGalleryButtons();
     this.initThemePickerDrag();
+    this.initZoom();
 
     // Start power-on sequence
     this.startPowerOn();
@@ -953,6 +961,35 @@ const UIController = {
     });
   },
 
+  initZoom() {
+    this.zoomLevel = 1;
+    const slider = document.getElementById('zoom-slider');
+    const video = document.getElementById('camera-feed');
+    const zoomInBtn = document.querySelector('.zoom-in');
+    const zoomOutBtn = document.querySelector('.zoom-out');
+
+    const applyZoom = (val) => {
+      this.zoomLevel = Math.max(1, Math.min(3, parseFloat(val)));
+      slider.value = this.zoomLevel;
+      video.style.transform = `scale(${this.zoomLevel})`;
+    };
+
+    slider.addEventListener('input', (e) => applyZoom(e.target.value));
+    zoomInBtn.addEventListener('click', () => applyZoom(this.zoomLevel + 0.2));
+    zoomOutBtn.addEventListener('click', () => applyZoom(this.zoomLevel - 0.2));
+
+    // Keyboard: + / - or = / -
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        applyZoom(this.zoomLevel + 0.2);
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        applyZoom(this.zoomLevel - 0.2);
+      }
+    });
+  },
+
   startPowerOn() {
     console.log('Starting power-on sequence');
     SoundEngine.trigger('poweron');
@@ -1042,7 +1079,7 @@ const UIController = {
       this.flashScreen();
 
       // Capture photo synchronously
-      const photoCanvas = CameraManager.capture();
+      const photoCanvas = CameraManager.capture(this.zoomLevel || 1);
 
       // Render polaroid
       const polaroidCanvas = PolaroidRenderer.render(photoCanvas, AppState.currentStyle);

@@ -20,37 +20,46 @@
 
   <!-- SCENE: Viewfinder (Fullscreen Camera) -->
   <div id="scene-viewfinder">
-    <video id="camera-feed" autoplay playsinline muted></video>
+    <!-- Camera frame: centered square — all HUD is relative to this -->
+    <div class="camera-frame">
+      <video id="camera-feed" autoplay playsinline muted></video>
 
-    <!-- Viewfinder Overlays -->
-    <div class="vf-grain"></div>
-    <div class="vf-scanlines"></div>
-    <div class="vf-vignette"></div>
-    <div class="vf-frame-guides"></div>
-    <div class="vf-breathing"></div>
+      <!-- Viewfinder Overlays -->
+      <div class="vf-grain"></div>
+      <div class="vf-scanlines"></div>
+      <div class="vf-vignette"></div>
+      <div class="vf-frame-guides"></div>
+      <div class="vf-breathing"></div>
 
-    <!-- HUD: Top Labels -->
-    <div class="hud-top">
-      <span class="hud-label film-counter">10</span>
-      <span class="hud-label brand">POLAROID</span>
-      <span class="hud-label style-name">CLASSIC</span>
-    </div>
-
-    <!-- HUD: Bottom Controls — theme picker on top, shutter below, stack bottom-right -->
-    <div class="hud-bottom">
-      <div class="theme-picker-wrapper">
-        <div id="style-picker" class="style-picker-strip"></div>
+      <!-- HUD: Top Labels -->
+      <div class="hud-top">
+        <span class="hud-label film-counter">10</span>
+        <span class="hud-label brand">POLAROID</span>
       </div>
-      <button id="shutter-btn" class="shutter-button" aria-label="Take photo"></button>
-    </div>
 
-    <!-- Photo stack — bottom right, hidden until first photo -->
-    <div id="photo-stack" class="photo-stack" aria-label="View gallery">
-      <span class="gallery-count-badge">0</span>
-    </div>
+      <!-- HUD: Bottom Controls -->
+      <div class="hud-bottom">
+        <div class="theme-picker-wrapper">
+          <div id="style-picker" class="style-picker-strip"></div>
+        </div>
+        <button id="shutter-btn" class="shutter-button" aria-label="Take photo"></button>
+      </div>
 
-    <!-- Toggle camera — top right area -->
-    <button id="toggle-camera" class="toggle-camera-btn" aria-label="Toggle camera" title="Switch camera">&#x1F4F7;</button>
+      <!-- Zoom slider — right side of frame -->
+      <div class="zoom-control">
+        <button class="zoom-btn zoom-in" aria-label="Zoom in">+</button>
+        <input type="range" id="zoom-slider" class="zoom-slider" min="1" max="3" step="0.1" value="1" orient="vertical">
+        <button class="zoom-btn zoom-out" aria-label="Zoom out">&minus;</button>
+      </div>
+
+      <!-- Photo stack — bottom right of frame -->
+      <div id="photo-stack" class="photo-stack" aria-label="View gallery">
+        <span class="gallery-count-badge">0</span>
+      </div>
+
+      <!-- Toggle camera -->
+      <button id="toggle-camera" class="toggle-camera-btn" aria-label="Toggle camera" title="Switch camera">&#x1F4F7;</button>
+    </div>
   </div>
 
   <!-- SCENE: Flash -->
