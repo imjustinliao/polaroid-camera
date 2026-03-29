@@ -593,31 +593,33 @@ button:disabled {
 
 /* ─── Toggle Camera ─── */
 
+/* Toggle camera — hidden on desktop, shown below frame on mobile/tablet */
 .toggle-camera-btn {
+  display: none;
   position: absolute;
-  top: 4.5%;
-  right: 7%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.55;
-  transition: opacity 150ms ease-out;
+  bottom: -44px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 31;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 50%;
-  padding: 7px;
-  color: var(--color-hud-text);
+  padding: 8px 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  color: rgba(240, 225, 200, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(240, 225, 200, 0.12);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  white-space: nowrap;
 }
 
-.toggle-camera-btn svg {
-  width: 100%;
-  height: 100%;
-}
-
-.toggle-camera-btn:hover {
-  opacity: 0.9;
+.toggle-camera-btn:hover,
+.toggle-camera-btn:active {
+  color: rgba(240, 225, 200, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(240, 225, 200, 0.25);
 }
 
 /* ─── Zoom Ruler ─── */
@@ -949,31 +951,33 @@ button:disabled {
   width: 80px;
 }
 
-/* Social links — positioned in the dark side bar area, outside camera frame */
-.scene-social {
+/* Credits bar — in the dark area outside the camera frame */
+.scene-credits {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 5;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
-.scene-social a {
-  display: flex;
-  align-items: center;
-  color: rgba(240, 225, 200, 0.25);
+.scene-credits a {
+  color: rgba(240, 225, 200, 0.35);
+  text-decoration: none;
   transition: color 150ms ease-out;
 }
 
-.scene-social a:hover {
-  color: rgba(240, 225, 200, 0.6);
+.scene-credits a:hover {
+  color: rgba(240, 225, 200, 0.7);
 }
 
-.scene-social svg {
-  width: 16px;
-  height: 16px;
+.credits-dot {
+  color: rgba(240, 225, 200, 0.2);
 }
 
 /* Shutter shake animation when limit reached */
@@ -1267,7 +1271,7 @@ button:disabled {
   .camera-frame {
     width: calc(100vw - 16px);
     height: calc(100vw - 16px);
-    max-height: calc(100vh - 16px);
+    max-height: calc(100vh - 100px);
     border-radius: 8px;
   }
 
@@ -1275,9 +1279,27 @@ button:disabled {
     border-radius: 8px;
   }
 
-  /* Smaller POLAROID text on phone */
   .brand {
-    font-size: 13px;
+    font-size: 12px;
+    letter-spacing: 0.25em;
+  }
+
+  .film-counter {
+    font-size: 16px;
+  }
+
+  /* Show the switch camera button on mobile */
+  .toggle-camera-btn {
+    display: block;
+  }
+
+  .zoom-ruler-track {
+    height: 90px;
+    width: 22px;
+  }
+
+  .zoom-level-label {
+    font-size: 10px;
   }
 
   .gallery-grid {
@@ -1285,11 +1307,10 @@ button:disabled {
     gap: 16px;
   }
 
-  /* Social links go below the frame on phone */
-  .scene-social {
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
+  /* Credits below the frame + toggle button */
+  .scene-credits {
+    bottom: 8px;
+    font-size: 10px;
   }
 
   .permission-dialog {

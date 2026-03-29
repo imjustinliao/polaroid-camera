@@ -255,6 +255,25 @@ const CameraManager = {
     await this.init();
   },
 
+  async flashTorch() {
+    // Only flash torch on rear camera if supported
+    if (AppState.cameraFacingMode !== 'environment' || !this.stream) return;
+    try {
+      const track = this.stream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities?.();
+      if (capabilities?.torch) {
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+        setTimeout(async () => {
+          try {
+            await track.applyConstraints({ advanced: [{ torch: false }] });
+          } catch (e) { /* ignore */ }
+        }, 300);
+      }
+    } catch (e) {
+      // Torch not supported — silently ignore
+    }
+  },
+
   capture(zoomLevel = 1) {
     const vw = this.videoEl.videoWidth || 1280;
     const vh = this.videoEl.videoHeight || 960;
@@ -1151,6 +1170,9 @@ const UIController = {
       // Sound and flash
       SoundEngine.trigger('full');
       this.flashScreen();
+
+      // Try to flash the torch on rear camera
+      await CameraManager.flashTorch();
 
       // Capture photo synchronously
       const photoCanvas = CameraManager.capture(this.zoomLevel || 1);

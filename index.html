@@ -79,20 +79,17 @@
       <!-- Photo stack — bottom right of frame, no count badge (shown in top-left) -->
       <div id="photo-stack" class="photo-stack" aria-label="View gallery"></div>
 
-      <!-- Toggle camera — SVG switch icon -->
-      <button id="toggle-camera" class="toggle-camera-btn" aria-label="Switch camera" title="Switch camera">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M21 3l-7 7"/><path d="M8 21H3v-5"/><path d="M3 21l7-7"/></svg>
-      </button>
+      <!-- Toggle camera — only shown on mobile/tablet -->
+      <button id="toggle-camera" class="toggle-camera-btn" aria-label="Switch camera">Switch Camera</button>
     </div>
 
-    <!-- Social links — in the side bar area, outside camera frame -->
-    <div class="scene-social">
-      <a href="https://justinliao.me" target="_blank" rel="noopener" title="justinliao.me">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-      </a>
-      <a href="https://x.com/imjustinliao" target="_blank" rel="noopener" title="@imjustinliao">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-      </a>
+    <!-- Credits bar — in the side/bottom area outside camera frame -->
+    <div class="scene-credits">
+      <a href="https://justinliao.me" target="_blank" rel="noopener">justinliao.me</a>
+      <span class="credits-dot">&middot;</span>
+      <a href="https://x.com/imjustinliao" target="_blank" rel="noopener">@imjustinliao</a>
+      <span class="credits-dot">&middot;</span>
+      <a href="https://github.com/imjustinliao/polaroid-camera" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
 
