@@ -200,14 +200,11 @@ button:disabled {
   box-shadow: 0 0 0 1px rgba(240, 225, 200, 0.08);
 }
 
-/* Clip only the video and overlays, not HUD elements */
-.camera-frame > video,
-.camera-frame > .vf-grain,
-.camera-frame > .vf-scanlines,
-.camera-frame > .vf-vignette,
-.camera-frame > .vf-frame-guides,
-.camera-frame > .vf-viewfinder-inner,
-.camera-frame > .vf-breathing {
+/* Inner clip container — clips video/overlays but lets HUD elements overflow */
+.camera-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
   border-radius: 10px;
 }
 
@@ -869,14 +866,11 @@ button:disabled {
   background: rgba(200, 60, 60, 0.5);
 }
 
-/* Gallery footer */
-.gallery-footer {
-  padding: 12px 20px max(16px, env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(240, 225, 200, 0.1);
+/* Export row — above footer line */
+.gallery-export-row {
+  padding: 12px 20px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -900,21 +894,84 @@ button:disabled {
   border-color: rgba(240, 225, 200, 0.4);
 }
 
-.gallery-credits {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(240, 225, 200, 0.4);
-  text-align: center;
+/* Gallery footer: contact left, copyright center, spacer right */
+.gallery-footer {
+  padding: 10px 20px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(240, 225, 200, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
 }
 
-.gallery-credits a {
-  color: rgba(240, 225, 200, 0.55);
-  text-decoration: none;
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-contact-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(240, 225, 200, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.footer-contact a {
+  display: flex;
+  align-items: center;
+  color: rgba(240, 225, 200, 0.45);
   transition: color 150ms ease-out;
 }
 
-.gallery-credits a:hover {
+.footer-contact a:hover {
   color: var(--color-cream);
+}
+
+.footer-contact svg {
+  width: 16px;
+  height: 16px;
+}
+
+.footer-copyright {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(240, 225, 200, 0.35);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.footer-spacer {
+  width: 80px;
+}
+
+/* Camera page social links — bottom left of frame */
+.cam-social {
+  position: absolute;
+  bottom: 24px;
+  left: 28px;
+  z-index: 31;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cam-social a {
+  display: flex;
+  align-items: center;
+  color: rgba(240, 225, 200, 0.35);
+  transition: color 150ms ease-out;
+}
+
+.cam-social a:hover {
+  color: var(--color-cream);
+}
+
+.cam-social svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Shutter shake animation when limit reached */
@@ -1205,20 +1262,15 @@ button:disabled {
 
 /* ─── Phone: portrait orientation ─── */
 @media (max-width: 768px) {
-  /* Less frame margin on small screens */
+  /* Phone: frame width-based, height follows to avoid vertical cut-off */
   .camera-frame {
-    width: calc(100vw - 24px);
-    height: calc(100vh - 24px);
+    width: calc(100vw - 20px);
+    height: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
     border-radius: 8px;
   }
 
-  .camera-frame > video,
-  .camera-frame > .vf-grain,
-  .camera-frame > .vf-scanlines,
-  .camera-frame > .vf-vignette,
-  .camera-frame > .vf-frame-guides,
-  .camera-frame > .vf-viewfinder-inner,
-  .camera-frame > .vf-breathing {
+  .camera-clip {
     border-radius: 8px;
   }
 

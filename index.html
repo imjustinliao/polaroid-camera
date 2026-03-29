@@ -42,15 +42,16 @@
   <div id="scene-viewfinder">
     <!-- Camera frame: centered square — all HUD is relative to this -->
     <div class="camera-frame">
-      <video id="camera-feed" autoplay playsinline muted></video>
-
-      <!-- Viewfinder Overlays -->
-      <div class="vf-grain"></div>
-      <div class="vf-scanlines"></div>
-      <div class="vf-vignette"></div>
-      <div class="vf-frame-guides"></div>
-      <div class="vf-viewfinder-inner"></div>
-      <div class="vf-breathing"></div>
+      <!-- Clip container — clips video + overlays, HUD elements sit outside -->
+      <div class="camera-clip">
+        <video id="camera-feed" autoplay playsinline muted></video>
+        <div class="vf-grain"></div>
+        <div class="vf-scanlines"></div>
+        <div class="vf-vignette"></div>
+        <div class="vf-frame-guides"></div>
+        <div class="vf-viewfinder-inner"></div>
+        <div class="vf-breathing"></div>
+      </div>
 
       <!-- HUD: Top Labels -->
       <div class="hud-top">
@@ -80,6 +81,16 @@
 
       <!-- Toggle camera -->
       <button id="toggle-camera" class="toggle-camera-btn" aria-label="Toggle camera" title="Switch camera">&#x1F4F7;</button>
+
+      <!-- Social links — bottom left -->
+      <div class="cam-social">
+        <a href="https://justinliao.me" target="_blank" rel="noopener" title="Website">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </a>
+        <a href="https://x.com/imjustinliao" target="_blank" rel="noopener" title="@imjustinliao">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -93,13 +104,23 @@
       <button id="close-gallery-btn" class="close-gallery-btn" aria-label="Close gallery">&#x2715;</button>
     </div>
     <div id="gallery-grid" class="gallery-grid"></div>
-    <div class="gallery-footer">
+    <!-- Export button above footer -->
+    <div class="gallery-export-row">
       <button id="export-all-btn" class="export-all-btn">Export All</button>
-      <div class="gallery-credits">
-        &copy; <a href="https://justinliao.me" target="_blank" rel="noopener">Justin Liao</a>
-        &middot;
-        <a href="https://x.com/imjustinliao" target="_blank" rel="noopener">@imjustinliao</a>
+    </div>
+    <!-- Footer: contact left, copyright center -->
+    <div class="gallery-footer">
+      <div class="footer-contact">
+        <span class="footer-contact-label">Contact</span>
+        <a href="https://justinliao.me" target="_blank" rel="noopener" title="Website">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </a>
+        <a href="https://x.com/imjustinliao" target="_blank" rel="noopener" title="@imjustinliao">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
       </div>
+      <span class="footer-copyright">&copy; Justin Liao</span>
+      <div class="footer-spacer"></div>
     </div>
   </div>
 
