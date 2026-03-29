@@ -828,13 +828,21 @@ const UIController = {
       this.updatePickerVisuals();
     });
 
-    // Center first option on load
-    requestAnimationFrame(() => {
+    // Center first option — retry until wrapper has width (it starts hidden)
+    const centerFirst = () => {
       const wrapperWidth = picker.parentElement.offsetWidth;
+      if (wrapperWidth === 0) {
+        requestAnimationFrame(centerFirst);
+        return;
+      }
       const first = this.styleOptions[0].element;
       picker.scrollLeft = first.offsetLeft - (wrapperWidth / 2) + (first.offsetWidth / 2);
       this.selectCenteredStyle();
-    });
+      this.updatePickerVisuals();
+    };
+    // Also re-center after viewfinder becomes visible
+    setTimeout(centerFirst, 100);
+    setTimeout(centerFirst, 2500); // after power-on animation completes
   },
 
   selectCenteredStyle() {
