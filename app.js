@@ -1909,17 +1909,55 @@ const UIController = {
 
   clearAll() {
     if (AppState.photos.length === 0) return;
-    if (!confirm('Clear all photos from your roll?')) return;
 
-    // Remove all gallery cards
-    this.galleryGrid.innerHTML = '';
-    AppState.photos = [];
-    AppState.photoCount = 10;
-    this.filmCounter.textContent = '10';
-    this.filmCounter.classList.remove('limit-reached');
-    this.photoStack.classList.remove('has-photos');
-    this.rebuildPhotoStack();
-    PhotoStorage.clear();
+    // Show themed confirmation dialog
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+
+    const dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+
+    const msg = document.createElement('p');
+    msg.className = 'confirm-msg';
+    msg.textContent = `Clear all ${AppState.photos.length} photo${AppState.photos.length > 1 ? 's' : ''} from your roll?`;
+
+    const hint = document.createElement('p');
+    hint.className = 'confirm-hint';
+    hint.textContent = 'This cannot be undone.';
+
+    const btns = document.createElement('div');
+    btns.className = 'confirm-btns';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'confirm-btn cancel';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => overlay.remove());
+
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'confirm-btn danger';
+    clearBtn.textContent = 'Clear All';
+    clearBtn.addEventListener('click', () => {
+      overlay.remove();
+      this.galleryGrid.innerHTML = '';
+      AppState.photos = [];
+      AppState.photoCount = 10;
+      this.filmCounter.textContent = '10';
+      this.filmCounter.classList.remove('limit-reached');
+      this.photoStack.classList.remove('has-photos');
+      this.rebuildPhotoStack();
+      PhotoStorage.clear();
+    });
+
+    btns.appendChild(cancelBtn);
+    btns.appendChild(clearBtn);
+    dialog.appendChild(msg);
+    dialog.appendChild(hint);
+    dialog.appendChild(btns);
+    overlay.appendChild(dialog);
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+    document.body.appendChild(overlay);
   },
 
   rebuildPhotoStack() {

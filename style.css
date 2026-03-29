@@ -949,6 +949,92 @@ button:disabled {
   background: rgba(200, 60, 60, 0.1);
 }
 
+/* Themed confirmation dialog */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: fade-in 150ms ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirm-dialog {
+  background: var(--color-warm-dark);
+  border: 1px solid rgba(240, 225, 200, 0.2);
+  border-radius: 10px;
+  padding: 28px 32px 24px;
+  max-width: 320px;
+  width: calc(100vw - 48px);
+  text-align: center;
+  animation: dialog-slide 300ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.confirm-msg {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--color-cream);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.confirm-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(240, 225, 200, 0.4);
+  margin-bottom: 24px;
+}
+
+.confirm-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.confirm-btn.cancel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(240, 225, 200, 0.15);
+  color: rgba(240, 225, 200, 0.6);
+}
+
+.confirm-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-cream);
+}
+
+.confirm-btn.danger {
+  background: rgba(200, 60, 50, 0.8);
+  border: 1px solid rgba(200, 60, 50, 0.6);
+  color: var(--color-cream);
+  box-shadow: 0 2px 8px rgba(200, 60, 50, 0.25);
+}
+
+.confirm-btn.danger:hover {
+  background: rgba(220, 70, 55, 0.9);
+  box-shadow: 0 4px 12px rgba(200, 60, 50, 0.4);
+}
+
 /* Gallery footer: contact left, copyright center, spacer right */
 .gallery-footer {
   padding: 10px 20px max(12px, env(safe-area-inset-bottom));
