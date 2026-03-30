@@ -2,7 +2,7 @@
 
 An immersive, full-screen Polaroid camera simulator. Point and shoot — experience the ritual of instant photography with authentic mechanical sounds, nostalgic aesthetics, and real-time photo development animations.
 
-**[Live Demo](https://imjustinliao.github.io/polaroid-camera/)** · **[GitHub](https://github.com/imjustinliao/polaroid-camera)**
+**[Live Demo](https://imjustinliao.github.io/polaroid-camera/)**
 
 ## Features
 
