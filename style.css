@@ -1573,6 +1573,8 @@ button:disabled {
   flex-direction: column;
   gap: 6px;
   padding: 8px 20px 14px;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .texture-picker-header {
@@ -1604,6 +1606,17 @@ button:disabled {
   -webkit-overflow-scrolling: touch;
   padding: 4px 0;
   scrollbar-width: none;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Ensure texture swatches stay large on all devices */
+@media (max-width: 768px) {
+  .texture-opt {
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+  }
 }
 
 .texture-options::-webkit-scrollbar {
