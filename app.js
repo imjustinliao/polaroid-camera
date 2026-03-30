@@ -1343,32 +1343,31 @@ const UIController = {
 
     // Populate texture options
     const texContainer = document.getElementById('texture-options');
+    const texNameLabel = document.getElementById('texture-name');
     const buildTextureOptions = () => {
       texContainer.innerHTML = '';
+      const bgColor = colorInput.value;
       for (const [key, tex] of Object.entries(PAPER_TEXTURES)) {
         const opt = document.createElement('div');
         opt.className = 'texture-opt' + (key === selectedTexture ? ' selected' : '');
-        // Show texture preview using the current color
-        const bgColor = colorInput.value;
         if (tex.opacity > 0) {
           const texType = tex.type || 'fractalNoise';
-          const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+          const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
           opt.style.background = `${svgBg}, ${bgColor}`;
-          opt.style.backgroundSize = '60px 60px, 100% 100%';
+          opt.style.backgroundSize = '80px 80px, 100% 100%';
         } else {
           opt.style.backgroundColor = bgColor;
         }
-        const label = document.createElement('span');
-        label.className = 'texture-opt-label';
-        label.textContent = tex.name;
-        opt.appendChild(label);
+        opt.title = tex.name;
         opt.addEventListener('click', () => {
           selectedTexture = key;
           texContainer.querySelectorAll('.texture-opt').forEach(o => o.classList.remove('selected'));
           opt.classList.add('selected');
+          texNameLabel.textContent = tex.name;
         });
         texContainer.appendChild(opt);
       }
+      texNameLabel.textContent = PAPER_TEXTURES[selectedTexture]?.name || 'None';
     };
 
     document.getElementById('add-color-theme').onclick = () => {

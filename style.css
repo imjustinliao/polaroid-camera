@@ -1567,12 +1567,18 @@ button:disabled {
   border-radius: 5px;
 }
 
-/* Texture picker row */
+/* Texture picker — horizontal scroll carousel */
 .texture-picker {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 20px 14px;
+}
+
+.texture-picker-header {
+  display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 20px 12px;
+  justify-content: space-between;
 }
 
 .texture-picker-label {
@@ -1581,24 +1587,39 @@ button:disabled {
   color: rgba(240, 225, 200, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  flex-shrink: 0;
+}
+
+.texture-picker-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-cream);
+  letter-spacing: 0.05em;
 }
 
 .texture-options {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0;
+  scrollbar-width: none;
+}
+
+.texture-options::-webkit-scrollbar {
+  display: none;
 }
 
 .texture-opt {
-  width: 32px;
-  height: 32px;
-  border-radius: 5px;
-  border: 1.5px solid rgba(240, 225, 200, 0.12);
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px solid rgba(240, 225, 200, 0.1);
   cursor: pointer;
   transition: all 120ms ease-out;
-  position: relative;
-  background-size: 60px 60px;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  background-size: 80px 80px;
 }
 
 .texture-opt:hover {
@@ -1607,23 +1628,7 @@ button:disabled {
 
 .texture-opt.selected {
   border-color: #fff;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-.texture-opt-label {
-  position: absolute;
-  bottom: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: 7px;
-  color: rgba(240, 225, 200, 0.35);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.texture-opt.selected .texture-opt-label {
-  color: rgba(240, 225, 200, 0.7);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 .color-picker-preview {
