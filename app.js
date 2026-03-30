@@ -1883,18 +1883,20 @@ const UIController = {
       // Turn torch on FIRST so the scene is illuminated for capture
       const torchWasOn = await CameraManager.torchOn();
 
-      // If torch turned on, wait briefly for it to illuminate the scene
-      if (torchWasOn) await new Promise(r => setTimeout(r, 120));
+      // Wait for torch to fully illuminate the scene
+      if (torchWasOn) await new Promise(r => setTimeout(r, 250));
 
-      // Sound and flash
+      // Capture the frame while torch is on
+      const photoCanvas = CameraManager.capture(this.zoomLevel || 1);
+
+      // Sound + screen flash happen AFTER capture (torch still on for natural feel)
       SoundEngine.trigger('full');
       this.flashScreen();
 
-      // Capture photo while torch is still on
-      const photoCanvas = CameraManager.capture(this.zoomLevel || 1);
-
-      // Turn torch off after capture
-      if (torchWasOn) CameraManager.torchOff();
+      // Keep torch on briefly during the flash, then turn off
+      if (torchWasOn) {
+        setTimeout(() => CameraManager.torchOff(), 150);
+      }
 
       // Render polaroid
       const polaroidCanvas = PolaroidRenderer.render(photoCanvas, AppState.currentStyle);
