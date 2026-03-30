@@ -1884,7 +1884,7 @@ const UIController = {
       const torchWasOn = await CameraManager.torchOn();
 
       // Wait for torch to fully illuminate the scene
-      if (torchWasOn) await new Promise(r => setTimeout(r, 250));
+      if (torchWasOn) await new Promise(r => setTimeout(r, 350));
 
       // Capture the frame while torch is on
       const photoCanvas = CameraManager.capture(this.zoomLevel || 1);
@@ -1895,7 +1895,7 @@ const UIController = {
 
       // Keep torch on briefly during the flash, then turn off
       if (torchWasOn) {
-        setTimeout(() => CameraManager.torchOff(), 150);
+        setTimeout(() => CameraManager.torchOff(), 250);
       }
 
       // Render polaroid
