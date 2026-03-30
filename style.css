@@ -1611,15 +1611,15 @@ button:disabled {
 }
 
 .texture-opt {
-  width: 56px;
-  height: 56px;
+  width: 80px;
+  height: 80px;
   border-radius: 8px;
   border: 2px solid rgba(240, 225, 200, 0.1);
   cursor: pointer;
   transition: all 120ms ease-out;
   flex-shrink: 0;
   scroll-snap-align: center;
-  background-size: 80px 80px;
+  background-size: 160px 160px;
 }
 
 .texture-opt:hover {

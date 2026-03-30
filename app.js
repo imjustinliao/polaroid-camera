@@ -1352,9 +1352,10 @@ const UIController = {
         opt.className = 'texture-opt' + (key === selectedTexture ? ' selected' : '');
         if (tex.opacity > 0) {
           const texType = tex.type || 'fractalNoise';
-          const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23t)' opacity='${tex.opacity}'/%3E%3C/svg%3E")`;
+          const boostedOpacity = Math.min(1, tex.opacity * 3);
+          const svgBg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='${texType}' baseFrequency='${tex.baseFreq}' numOctaves='${tex.octaves}' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23t)' opacity='${boostedOpacity}'/%3E%3C/svg%3E")`;
           opt.style.background = `${svgBg}, ${bgColor}`;
-          opt.style.backgroundSize = '80px 80px, 100% 100%';
+          opt.style.backgroundSize = '160px 160px, 100% 100%';
         } else {
           opt.style.backgroundColor = bgColor;
         }
