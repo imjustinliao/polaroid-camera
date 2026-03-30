@@ -1840,9 +1840,9 @@ button:disabled {
     height: 50px;
   }
 
-  /* Zoom ruler — compact on mobile, well inside the frame guide */
+  /* Zoom ruler — compact on mobile, just inside the frame guide */
   .zoom-ruler {
-    right: 14%;
+    right: 6%;
   }
 
   .zoom-ruler-track {
