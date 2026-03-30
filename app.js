@@ -363,8 +363,30 @@ const CameraManager = {
     await this.init();
   },
 
+  async torchOn() {
+    // Turn torch on if available (rear camera only). Returns true if torch is on.
+    if (AppState.cameraFacingMode !== 'environment' || !this.stream) return false;
+    try {
+      const track = this.stream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities?.();
+      if (capabilities?.torch) {
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return false;
+  },
+
+  async torchOff() {
+    if (!this.stream) return;
+    try {
+      const track = this.stream.getVideoTracks()[0];
+      await track.applyConstraints({ advanced: [{ torch: false }] });
+    } catch (e) { /* ignore */ }
+  },
+
   async flashTorch() {
-    // Only flash torch on rear camera if supported
+    // Legacy — kept for compatibility but capture() now uses torchOn/torchOff directly
     if (AppState.cameraFacingMode !== 'environment' || !this.stream) return;
     try {
       const track = this.stream.getVideoTracks()[0];
@@ -1841,6 +1863,7 @@ const UIController = {
     // Enforce 10-photo limit
     if (AppState.photoCount <= 0) {
       SoundEngine.trigger('denied');
+      if (navigator.vibrate) navigator.vibrate([20, 30, 20]); // double buzz for denied
       this.shutterBtn.classList.add('limit-reached');
       this.filmCounter.classList.add('limit-reached');
       setTimeout(() => {
@@ -1854,15 +1877,24 @@ const UIController = {
     this.shutterBtn.disabled = true;
 
     try {
+      // Haptic feedback on mobile
+      if (navigator.vibrate) navigator.vibrate(30);
+
+      // Turn torch on FIRST so the scene is illuminated for capture
+      const torchWasOn = await CameraManager.torchOn();
+
+      // If torch turned on, wait briefly for it to illuminate the scene
+      if (torchWasOn) await new Promise(r => setTimeout(r, 120));
+
       // Sound and flash
       SoundEngine.trigger('full');
       this.flashScreen();
 
-      // Try to flash the torch on rear camera
-      await CameraManager.flashTorch();
-
-      // Capture photo synchronously
+      // Capture photo while torch is still on
       const photoCanvas = CameraManager.capture(this.zoomLevel || 1);
+
+      // Turn torch off after capture
+      if (torchWasOn) CameraManager.torchOff();
 
       // Render polaroid
       const polaroidCanvas = PolaroidRenderer.render(photoCanvas, AppState.currentStyle);
