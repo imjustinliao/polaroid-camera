@@ -1840,9 +1840,13 @@ button:disabled {
     height: 50px;
   }
 
-  /* Hide zoom ruler on very small screens — use keyboard +/- instead */
+  /* Zoom ruler — compact on mobile */
   .zoom-ruler {
-    display: none;
+    right: 3%;
+  }
+
+  .zoom-ruler-track {
+    height: 90px;
   }
 
   /* Viewfinder reticle smaller */
